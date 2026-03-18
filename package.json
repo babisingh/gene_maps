@@ -1,0 +1,51 @@
+{
+  "name": "gene_maps",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "db:validate": "ts-node --project tsconfig.scripts.json scripts/validate-db.ts",
+    "api:validate": "ts-node --project tsconfig.scripts.json scripts/validate-apis.ts",
+    "db:seed": "ts-node --project tsconfig.scripts.json scripts/populate-database.ts"
+  },
+  "dependencies": {
+    "axios": "^1.13.6",
+    "d3": "^7.9.0",
+    "date-fns": "^4.1.0",
+    "framer-motion": "^12.38.0",
+    "lucide-react": "^0.577.0",
+    "neo4j-driver": "^6.0.1",
+    "next": "14.2.35",
+    "pg": "^8.20.0",
+    "react": "^18",
+    "react-dom": "^18",
+    "recharts": "^3.8.0",
+    "redis": "^5.11.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/d3": "^7.4.3",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^20.19.37",
+    "@types/pg": "^8.18.0",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "dotenv": "^17.3.1",
+    "eslint": "^8",
+    "eslint-config-next": "14.2.35",
+    "jest": "^30.3.0",
+    "jest-environment-jsdom": "^30.3.0",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5"
+  }
+}
