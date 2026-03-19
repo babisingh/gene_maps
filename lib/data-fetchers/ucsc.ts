@@ -52,15 +52,15 @@ export async function fetchPhyloPScore(
   genome = 'hg38'
 ): Promise<number> {
   try {
-    const data = await ucscFetch<{ datapoints?: [number, number][] }>(
+    const data = await ucscFetch<{ phyloP100way?: { value: number }[] }>(
       `/getData/track?genome=${genome}&track=phyloP100way&chrom=${chromosome}&start=${start}&end=${end}`
     );
 
-    const points = data?.datapoints ?? [];
+    const points = data?.phyloP100way ?? [];
     if (points.length === 0) return 0;
 
     // Average the per-base PhyloP scores
-    const avg = points.reduce((sum, [, score]) => sum + score, 0) / points.length;
+    const avg = points.reduce((sum, p) => sum + p.value, 0) / points.length;
 
     // Normalize to 0–10 scale (raw PhyloP range: roughly -14 to +6)
     return Math.min(10, Math.max(0, ((avg + 14) / 20) * 10));
@@ -81,14 +81,14 @@ export async function fetchPhastConsScore(
   genome = 'hg38'
 ): Promise<number> {
   try {
-    const data = await ucscFetch<{ datapoints?: [number, number][] }>(
+    const data = await ucscFetch<{ phastCons100way?: { value: number }[] }>(
       `/getData/track?genome=${genome}&track=phastCons100way&chrom=${chromosome}&start=${start}&end=${end}`
     );
 
-    const points = data?.datapoints ?? [];
+    const points = data?.phastCons100way ?? [];
     if (points.length === 0) return 5.0;
 
-    const avg = points.reduce((sum, [, score]) => sum + score, 0) / points.length;
+    const avg = points.reduce((sum, p) => sum + p.value, 0) / points.length;
     return avg * 10; // Already 0–1, scale to 0–10
   } catch {
     return 5.0;
