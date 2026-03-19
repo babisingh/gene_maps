@@ -10,7 +10,7 @@
 //   - Final score: 0–100 (percent)
 // ============================================================
 
-import { fetchOrthologData } from '../data-fetchers/ensembl';
+import { fetchOrthologDataBySymbol } from '../data-fetchers/ensembl';
 import { cacheGet, cacheSet, cacheKey } from '../database/redis';
 import type { ConservationData, SpeciesConservation } from '../../types';
 
@@ -52,11 +52,11 @@ export class ConservationAnalyzer {
     const cached = await cacheGet<ConservationData>(key);
     if (cached) return cached;
 
-    let orthologs: Awaited<ReturnType<typeof fetchOrthologData>> = [];
+    let orthologs: Awaited<ReturnType<typeof fetchOrthologDataBySymbol>> = [];
     let apiWarning: string | undefined;
 
     try {
-      orthologs = await fetchOrthologData(ensemblId);
+      orthologs = await fetchOrthologDataBySymbol(geneSymbol);
     } catch (err) {
       const msg = (err as Error).message ?? String(err);
       console.warn(`[conservation] ENSEMBL ortholog fetch failed for ${ensemblId}: ${msg}`);

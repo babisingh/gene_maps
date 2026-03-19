@@ -87,7 +87,28 @@ export async function fetchOrthologData(
 ): Promise<EnsemblOrtholog[]> {
   const speciesParam = targetSpecies ? `&target_species=${targetSpecies}` : '';
   const data = await ensemblFetch<{ data: Array<{ homologies: EnsemblOrtholog[] }> }>(
-    `/homology/id/${ensemblId}?content-type=application/json&type=orthologues${speciesParam}`
+    `/homology/id/${ensemblId}?type=orthologues${speciesParam}`
+  );
+
+  if (!data?.data?.[0]?.homologies) {
+    return [];
+  }
+
+  return data.data[0].homologies;
+}
+
+/**
+ * Fetch ortholog data using gene symbol (more reliable than ID endpoint).
+ * Uses /homology/symbol/homo_sapiens/:symbol — the symbol endpoint is stable
+ * and returns the same response shape as fetchOrthologData.
+ */
+export async function fetchOrthologDataBySymbol(
+  geneSymbol: string,
+  targetSpecies?: string
+): Promise<EnsemblOrtholog[]> {
+  const speciesParam = targetSpecies ? `&target_species=${targetSpecies}` : '';
+  const data = await ensemblFetch<{ data: Array<{ homologies: EnsemblOrtholog[] }> }>(
+    `/homology/symbol/homo_sapiens/${geneSymbol}?type=orthologues${speciesParam}`
   );
 
   if (!data?.data?.[0]?.homologies) {
