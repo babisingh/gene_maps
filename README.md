@@ -1,4 +1,4 @@
-# Gene-Maps — Spatial Pharmacogenomics Platform
+# Gene-Maps : Spatial Pharmacogenomics Platform
 
 > **Map your gene's address in 3D space. Discover what makes it druggable.**
 
