@@ -55,9 +55,24 @@ export async function GET(
       );
     }
     if (error instanceof ExternalAPIError) {
+      // 404 from ENSEMBL means the gene symbol doesn't exist in their database
+      if (error.statusCode === 404) {
+        return NextResponse.json(
+          { error: `Gene '${gene}' not found in ENSEMBL. Check the spelling — use the official HGNC symbol (e.g. GCG, BRCA1, TP53).` },
+          { status: 404 }
+        );
+      }
+      // 429 = rate limited
+      if (error.statusCode === 429) {
+        return NextResponse.json(
+          { error: 'ENSEMBL API rate limit reached. Please wait a few seconds and try again.' },
+          { status: 429 }
+        );
+      }
+      // 5xx or network error = actual outage
       const detail = error.statusCode ? `HTTP ${error.statusCode}` : 'network error';
       return NextResponse.json(
-        { error: `ENSEMBL API unreachable (${detail}). The external API may be temporarily down — please try again in a moment.` },
+        { error: `ENSEMBL API error (${detail}). The external API may be temporarily unavailable — please try again in a moment.` },
         { status: 503 }
       );
     }
