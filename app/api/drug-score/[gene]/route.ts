@@ -5,9 +5,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { DrugTargetScorer } from '@/lib/algorithms/drug-target';
-import { getGeneBySymbol } from '@/lib/database/queries';
-import { fetchGeneInfo } from '@/lib/data-fetchers/ensembl';
-import { GeneNotFoundError } from '@/lib/utils/errors';
+import { resolveEnsemblId } from '@/lib/utils/resolve-ensembl-id';
+import { GeneNotFoundError, ExternalAPIError } from '@/lib/utils/errors';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,23 +21,7 @@ export async function GET(
   }
 
   try {
-    let ensemblId: string | null = null;
-
-    try {
-      const dbGene = await getGeneBySymbol(gene);
-      ensemblId = dbGene?.ensembl_id ?? null;
-    } catch {
-      // DB unavailable, fall through
-    }
-
-    if (!ensemblId) {
-      const ensemblGene = await fetchGeneInfo(gene);
-      ensemblId = ensemblGene.id;
-    }
-
-    if (!ensemblId) {
-      throw new GeneNotFoundError(gene);
-    }
+    const ensemblId = await resolveEnsemblId(gene);
 
     const scorer = new DrugTargetScorer();
     const result = await scorer.scoreDrugTarget(gene, ensemblId);
@@ -46,7 +29,16 @@ export async function GET(
     return NextResponse.json(result);
   } catch (error) {
     if (error instanceof GeneNotFoundError) {
-      return NextResponse.json({ error: error.message }, { status: 404 });
+      return NextResponse.json(
+        { error: `Gene '${gene}' not found. Use an official HGNC symbol (e.g. GCG, BRCA1, TP53).` },
+        { status: 404 }
+      );
+    }
+    if (error instanceof ExternalAPIError && error.statusCode === 404) {
+      return NextResponse.json(
+        { error: `Gene '${gene}' not found in ENSEMBL. Check the spelling.` },
+        { status: 404 }
+      );
     }
     console.error(`[GET /api/drug-score/${gene}] Error:`, error);
     return NextResponse.json({ error: 'Drug target scoring failed.' }, { status: 500 });

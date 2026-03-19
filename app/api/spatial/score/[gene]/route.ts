@@ -6,9 +6,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { SpatialScoringEngine } from '@/lib/algorithms/spatial-scoring';
-import { getGeneBySymbol } from '@/lib/database/queries';
-import { fetchGeneInfo } from '@/lib/data-fetchers/ensembl';
-import { GeneNotFoundError } from '@/lib/utils/errors';
+import { resolveEnsemblId } from '@/lib/utils/resolve-ensembl-id';
+import { GeneNotFoundError, ExternalAPIError } from '@/lib/utils/errors';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,24 +22,7 @@ export async function GET(
   }
 
   try {
-    // Resolve ENSEMBL ID (DB first, then live API as fallback)
-    let ensemblId: string | null = null;
-
-    try {
-      const dbGene = await getGeneBySymbol(gene);
-      ensemblId = dbGene?.ensembl_id ?? null;
-    } catch {
-      // DB unavailable — fall through to live API
-    }
-
-    if (!ensemblId) {
-      const ensemblGene = await fetchGeneInfo(gene);
-      ensemblId = ensemblGene.id;
-    }
-
-    if (!ensemblId) {
-      throw new GeneNotFoundError(gene);
-    }
+    const ensemblId = await resolveEnsemblId(gene);
 
     const engine = new SpatialScoringEngine();
     const [spatialScore, druggabilityScore] = await Promise.all([
@@ -54,7 +36,16 @@ export async function GET(
     });
   } catch (error) {
     if (error instanceof GeneNotFoundError) {
-      return NextResponse.json({ error: error.message }, { status: 404 });
+      return NextResponse.json(
+        { error: `Gene '${gene}' not found. Use an official HGNC symbol (e.g. GCG, BRCA1, TP53).` },
+        { status: 404 }
+      );
+    }
+    if (error instanceof ExternalAPIError && error.statusCode === 404) {
+      return NextResponse.json(
+        { error: `Gene '${gene}' not found in ENSEMBL. Check the spelling.` },
+        { status: 404 }
+      );
     }
     console.error(`[GET /api/spatial/score/${gene}] Error:`, error);
     return NextResponse.json({ error: 'Spatial scoring failed.' }, { status: 500 });
