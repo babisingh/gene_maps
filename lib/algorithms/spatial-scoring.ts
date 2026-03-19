@@ -176,14 +176,16 @@ export class SpatialScoringEngine {
   }
 
   /**
-   * Expression plasticity = inverse of tissue specificity.
-   * Broadly expressed genes (low Tau) → more plastic → score 5–8.
-   * Highly specific genes → score 2–5.
+   * Expression plasticity = inverse of tissue specificity (GTEx Tau index).
+   * Broadly expressed genes (low Tau, specificity near 0) → high plasticity → score near 10.
+   * Highly tissue-specific genes (Tau near 1, specificity near 10) → low plasticity → score near 0.
+   *
+   * Using full range (10 − specificity) for maximum granularity across the 0–10 scale.
    */
   private async getExpressionPlasticity(geneSymbol: string): Promise<number> {
     const specificity = await fetchTissueSpecificityScore(geneSymbol);
-    // Invert: low specificity (broadly expressed) = high plasticity
-    return Math.min(10, 10 - specificity * 0.5);
+    // Full inversion: low Tau (ubiquitous) = high plasticity score
+    return Math.min(10, Math.max(0, 10 - specificity));
   }
 }
 

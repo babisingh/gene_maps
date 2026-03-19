@@ -6,7 +6,7 @@
 // ============================================================
 
 import { useState } from 'react';
-import { Scissors, AlertTriangle, CheckCircle, AlertCircle } from 'lucide-react';
+import { Scissors, AlertTriangle, CheckCircle, AlertCircle, Info } from 'lucide-react';
 import type { CRISPRSafetyData } from '@/types';
 
 interface Props {
@@ -35,16 +35,51 @@ function SafetyBadge({ score }: { score: number }) {
   );
 }
 
+const RISK_META: Record<string, { info: string }> = {
+  'TAD Disruption Risk': {
+    info:
+      'Risk that the CRISPR cut will disrupt a TAD (Topologically Associating Domain) boundary. ' +
+      'TAD boundaries are insulator regions anchored by CTCF proteins that prevent enhancers in one domain ' +
+      'from activating genes in adjacent domains. Editing near a boundary (high CTCF density) can rewire gene regulation. ' +
+      'Score 0–10: lower = safer (cut is far from boundaries).',
+  },
+  'Off-Target Risk': {
+    info:
+      'Estimated probability of unintended edits at other genomic loci with similar sequences. ' +
+      'Derived from the number of spatial neighbors this gene has (more neighbors = more similar-sequence ' +
+      'genomic regions that a guide RNA might bind). Score 0–10: lower = fewer predicted off-target sites.',
+  },
+  'Conservation Constraint': {
+    info:
+      'PhyloP100way score at the edit position (±100 bp window), normalized to 0–10. ' +
+      'PhyloP measures per-base evolutionary conservation across 100 vertebrate genomes. ' +
+      'High scores mean this exact position is under strong purifying selection — editing it risks ' +
+      'disrupting an essential function even if on-target. Score 0–10: lower = less constrained.',
+  },
+};
+
 function RiskMeter({ label, value }: { label: string; value: number }) {
   const color =
     value <= 3 ? 'bg-emerald-500' :
     value <= 6 ? 'bg-yellow-500' :
     'bg-red-500';
+  const [showInfo, setShowInfo] = useState(false);
 
   return (
     <div>
       <div className="flex justify-between text-xs text-gray-600 mb-1">
-        <span>{label}</span>
+        <div className="flex items-center gap-1">
+          <span>{label}</span>
+          {RISK_META[label] && (
+            <button
+              onClick={() => setShowInfo((v) => !v)}
+              aria-label={`Info about ${label}`}
+              className="text-gray-300 hover:text-blue-500 transition"
+            >
+              <Info className="h-3 w-3" />
+            </button>
+          )}
+        </div>
         <span className="font-semibold">{value.toFixed(1)}/10</span>
       </div>
       <div className="w-full bg-gray-100 rounded-full h-2.5">
@@ -53,6 +88,11 @@ function RiskMeter({ label, value }: { label: string; value: number }) {
           style={{ width: `${(value / 10) * 100}%` }}
         />
       </div>
+      {showInfo && RISK_META[label] && (
+        <p className="mt-1.5 text-xs text-gray-500 bg-gray-50 rounded-lg px-2.5 py-2 leading-relaxed">
+          {RISK_META[label].info}
+        </p>
+      )}
     </div>
   );
 }
@@ -100,6 +140,14 @@ export function CRISPRSafetyAssessment({ geneSymbol }: Props) {
       <div className="flex items-center gap-2">
         <Scissors className="h-5 w-5 text-purple-600" />
         <h3 className="text-base font-semibold text-gray-900">CRISPR Safety Assessment</h3>
+      </div>
+
+      {/* What this does */}
+      <div className="px-3 py-2 bg-purple-50 border border-purple-100 rounded-lg text-xs text-purple-700 leading-relaxed">
+        Enter a chromosomal base-pair position to assess the safety of editing{' '}
+        <strong>{geneSymbol}</strong> at that location. The tool calculates TAD boundary disruption risk
+        (using UCSC CTCF occupancy data), off-target risk (from spatial neighbor count), and evolutionary
+        conservation constraint (PhyloP100way). Higher safety score = safer edit.
       </div>
 
       {/* Input form */}
@@ -151,13 +199,19 @@ export function CRISPRSafetyAssessment({ geneSymbol }: Props) {
       {result && (
         <div className="space-y-4">
           {/* Overall score */}
-          <div className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-xl shadow-sm">
-            <div>
-              <div className="text-xs text-gray-500 mb-0.5">Overall Safety Score</div>
-              <div className="text-3xl font-bold text-gray-900">{result.safety_score.toFixed(1)}</div>
-              <div className="text-xs text-gray-400">out of 10</div>
+          <div className="p-4 bg-white border border-gray-200 rounded-xl shadow-sm space-y-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-xs text-gray-500 mb-0.5">Overall Safety Score</div>
+                <div className="text-3xl font-bold text-gray-900">{result.safety_score.toFixed(1)}</div>
+                <div className="text-xs text-gray-400">out of 10</div>
+              </div>
+              <SafetyBadge score={result.safety_score} />
             </div>
-            <SafetyBadge score={result.safety_score} />
+            <p className="text-xs text-gray-500 leading-relaxed">
+              Formula: <span className="font-mono text-gray-600">10 − (0.6 × TAD risk + 0.4 × off-target risk)</span>.
+              Conservation constraint is reported separately as an independent safety signal.
+            </p>
           </div>
 
           {/* Risk breakdown */}

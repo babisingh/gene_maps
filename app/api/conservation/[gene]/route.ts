@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ConservationAnalyzer } from '@/lib/algorithms/conservation';
 import { getGeneBySymbol } from '@/lib/database/queries';
 import { fetchGeneInfo } from '@/lib/data-fetchers/ensembl';
-import { GeneNotFoundError } from '@/lib/utils/errors';
+import { GeneNotFoundError, ExternalAPIError } from '@/lib/utils/errors';
 import type { ConservationData } from '@/types';
 
 export const dynamic = 'force-dynamic';
@@ -49,11 +49,21 @@ export async function GET(
     return NextResponse.json(conservationData);
   } catch (error) {
     if (error instanceof GeneNotFoundError) {
-      return NextResponse.json({ error: error.message }, { status: 404 });
+      return NextResponse.json(
+        { error: `Gene '${gene}' not found in ENSEMBL. Check the spelling — use the official symbol (e.g. GCG, BRCA1, TP53).` },
+        { status: 404 }
+      );
+    }
+    if (error instanceof ExternalAPIError) {
+      const detail = error.statusCode ? `HTTP ${error.statusCode}` : 'network error';
+      return NextResponse.json(
+        { error: `ENSEMBL API unreachable (${detail}). The external API may be temporarily down — please try again in a moment.` },
+        { status: 503 }
+      );
     }
     console.error(`[GET /api/conservation/${gene}] Error:`, error);
     return NextResponse.json(
-      { error: 'Conservation analysis failed. The gene may not be in our database.' },
+      { error: 'Conservation analysis failed. Please try again.' },
       { status: 500 }
     );
   }

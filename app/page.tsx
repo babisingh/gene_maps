@@ -243,9 +243,11 @@ export default function HomePage() {
         )}
       </AnimatePresence>
 
-      {/* ── Feature cards (empty state) ─────────────────────── */}
+      {/* ── Feature cards + About section (empty state) ────── */}
       {!selectedGene && (
-        <div className="max-w-5xl mx-auto px-4 pb-16">
+        <div className="max-w-5xl mx-auto px-4 pb-16 space-y-12">
+
+          {/* Feature cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             {FEATURE_CARDS.map(({ icon, title, desc }) => (
               <div key={title} className="p-5 bg-white border border-gray-200 rounded-xl shadow-sm text-center hover:shadow-md transition">
@@ -256,8 +258,121 @@ export default function HomePage() {
             ))}
           </div>
 
+          {/* ── About / Science behind ───────────────────────── */}
+          <section aria-labelledby="about-heading" className="space-y-8">
+            <div className="text-center">
+              <h2 id="about-heading" className="text-2xl font-bold text-gray-900 mb-2">
+                The Science Behind Gene-Maps
+              </h2>
+              <p className="text-gray-500 text-sm max-w-2xl mx-auto">
+                Understanding why 3D genome architecture changes how we find drug targets.
+              </p>
+            </div>
+
+            {/* Three-column science explainer */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Column 1: 3D Genome */}
+              <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-3 shadow-sm">
+                <div className="text-3xl">🧬</div>
+                <h3 className="font-semibold text-gray-900">Your DNA is 3D, Not Linear</h3>
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  The 3 billion base pairs of human DNA are folded into the nucleus of every cell — a space
+                  just 6 microns across. This folding is not random. DNA is organized into loops, compartments,
+                  and <strong>Topologically Associating Domains (TADs)</strong>: ~1 Mb regions where genes
+                  and their regulatory enhancers are physically close to each other.
+                </p>
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  The Hi-C technique maps these 3D contacts genome-wide by cross-linking DNA strands that
+                  are spatially close, then sequencing the ligation junctions. Gene-Maps uses pre-computed
+                  Hi-C contact frequencies to build the spatial interaction network you see in the Network tab.
+                </p>
+              </div>
+
+              {/* Column 2: TADs and CTCF */}
+              <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-3 shadow-sm">
+                <div className="text-3xl">📐</div>
+                <h3 className="font-semibold text-gray-900">TADs and CTCF Insulators</h3>
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  TAD boundaries are anchored by <strong>CTCF</strong>, a zinc-finger protein that acts as a
+                  genomic insulator. CTCF sites are loaded at boundaries to prevent enhancers inside one
+                  TAD from activating genes in an adjacent TAD. When CTCF sites are deleted or mutated —
+                  by disease or by CRISPR editing — TAD boundaries collapse, and enhancers can &quot;invade&quot;
+                  neighboring domains, causing ectopic gene activation.
+                </p>
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  The CRISPR Safety tab uses UCSC ENCODE CTCF occupancy data to estimate how many CTCF
+                  binding sites are near your proposed edit position. Dense CTCF clustering signals a
+                  TAD boundary — editing there carries higher disruption risk.
+                </p>
+              </div>
+
+              {/* Column 3: Why it matters for drugs */}
+              <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-3 shadow-sm">
+                <div className="text-3xl">💊</div>
+                <h3 className="font-semibold text-gray-900">Why 3D Genome = Better Drug Targets</h3>
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  Traditional druggability screens look at protein structure in isolation. But a gene&apos;s
+                  position in 3D chromatin space tells you much more: genes at the center of spatial
+                  interaction networks (<strong>spatial hubs</strong>) tend to be master regulators,
+                  expressed broadly, and under strong evolutionary constraint — all hallmarks of
+                  high-quality drug targets.
+                </p>
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  Finan et al. (2017, <em>Sci Transl Med</em>) showed that targets with genetic evidence
+                  from human disease loci — which cluster in active TADs — have a 2× higher clinical
+                  success rate. Gene-Maps brings this spatial context to any gene query.
+                </p>
+              </div>
+            </div>
+
+            {/* Data flow */}
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 rounded-xl p-6 space-y-4">
+              <h3 className="font-semibold text-gray-900 text-center">How Gene-Maps Calculates Scores</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-5 gap-2 items-center text-xs text-center">
+                {[
+                  { label: 'ENSEMBL\nOrthologs', sub: 'Conservation score', color: 'bg-blue-100 text-blue-800' },
+                  { label: 'UCSC\nPhyloP100', sub: 'Accessibility + CRISPR constraint', color: 'bg-purple-100 text-purple-800' },
+                  { label: 'STRING DB\nPPI', sub: 'Network centrality', color: 'bg-green-100 text-green-800' },
+                  { label: 'Hi-C\nContacts', sub: 'Interaction strength', color: 'bg-amber-100 text-amber-800' },
+                  { label: 'GTEx\nExpression', sub: 'Expression breadth', color: 'bg-red-100 text-red-800' },
+                ].map(({ label, sub, color }) => (
+                  <div key={label} className={`${color} rounded-lg px-3 py-2 space-y-1`}>
+                    <div className="font-semibold whitespace-pre-line leading-tight">{label}</div>
+                    <div className="opacity-75 leading-tight">{sub}</div>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-center text-gray-500">
+                All five inputs are combined into the <strong>Spatial Score</strong>:
+                0.25 × conservation + 0.20 × accessibility + 0.25 × centrality + 0.20 × Hi-C contacts + 0.10 × expression breadth
+              </p>
+            </div>
+
+            {/* Quick glossary */}
+            <div className="bg-white border border-gray-200 rounded-xl p-6">
+              <h3 className="font-semibold text-gray-900 mb-4">Glossary</h3>
+              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3 text-sm">
+                {[
+                  ['TAD', 'Topologically Associating Domain — a self-interacting chromatin region (~1 Mb) defined by Hi-C data.'],
+                  ['CTCF', 'CCCTC-binding factor — zinc-finger protein that marks TAD boundaries and acts as a chromatin insulator.'],
+                  ['Hi-C', 'Genome-wide 3D chromatin conformation capture technique measuring physical proximity of DNA loci.'],
+                  ['PhyloP', 'Per-base conservation score from alignment of 100 vertebrate genomes. Positive = conserved.'],
+                  ['Ortholog', 'A gene in another species that evolved from the same ancestral gene. Percent identity = amino acid similarity.'],
+                  ['STRING DB', 'Database of known and predicted protein-protein interactions, scored by experimental and computational evidence.'],
+                  ['GTEx', 'Genotype-Tissue Expression project — gene expression levels across 54 human tissues.'],
+                  ['Druggability', 'Likelihood that a protein can be modulated by a small molecule or biologic with therapeutic effect.'],
+                ].map(([term, def]) => (
+                  <div key={term} className="flex gap-2">
+                    <dt className="font-semibold text-gray-800 shrink-0 w-20">{term}</dt>
+                    <dd className="text-gray-500 leading-relaxed">{def}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          </section>
+
           {/* Data source attribution */}
-          <p className="text-center text-xs text-gray-400 mt-8">
+          <p className="text-center text-xs text-gray-400">
             Data sources: ENSEMBL REST API · UCSC PhyloP100way · STRING DB · GTEx v8 · Hi-C (pre-computed)
           </p>
         </div>

@@ -69,8 +69,9 @@ const COMPONENT_META: Record<
     label: 'Expression',
     weight: 10,
     description:
-      'Tissue expression plasticity from GTEx (inverse of Tau specificity index). ' +
-      'Broadly expressed genes score higher here; tissue-specific genes score lower.',
+      'Expression plasticity from GTEx (inverse of Tau tissue specificity index). ' +
+      'Broadly expressed genes (Tau near 0) score near 10 — ubiquitous expression indicates active regulatory machinery across many cell types. ' +
+      'Tissue-restricted genes (Tau near 1) score near 0. Full 0–10 range used for maximum granularity.',
     color: '#ef4444',
   },
 };

@@ -6,7 +6,7 @@
 // ============================================================
 
 import { useState, useEffect } from 'react';
-import { Globe, AlertCircle } from 'lucide-react';
+import { Globe, AlertCircle, Info } from 'lucide-react';
 import type { ConservationData } from '@/types';
 
 interface Props {
@@ -49,6 +49,7 @@ export function ConservationAnalysis({ geneSymbol }: Props) {
   const [data, setData] = useState<ConservationData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showAvgInfo, setShowAvgInfo] = useState(false);
 
   useEffect(() => {
     if (!geneSymbol) return;
@@ -112,11 +113,26 @@ export function ConservationAnalysis({ geneSymbol }: Props) {
           <Globe className="h-5 w-5 text-blue-600" />
           <h3 className="text-base font-semibold text-gray-900">Cross-Species Conservation</h3>
         </div>
-        <span className="text-sm text-gray-500">
+        <div className="flex items-center gap-1.5 text-sm text-gray-500">
           Avg:{' '}
           <span className="font-bold text-blue-700">{data.average_conservation}%</span>
-        </span>
+          <button
+            onClick={() => setShowAvgInfo((v) => !v)}
+            aria-label="Info about average conservation score"
+            className="text-gray-300 hover:text-blue-500 transition"
+          >
+            <Info className="h-3.5 w-3.5" />
+          </button>
+        </div>
       </div>
+      {showAvgInfo && (
+        <div className="px-3 py-2 bg-blue-50 border border-blue-100 rounded-lg text-xs text-blue-700 leading-relaxed">
+          The average conservation is a <strong>distance-weighted mean</strong> of ortholog percent identity across 10 model organisms.
+          Species closer to humans (mouse, rat) are weighted more heavily than distant relatives (nematode, fruit fly).
+          Percent identity is the fraction of amino acids identical between the human protein and its ortholog in each species,
+          as reported by the ENSEMBL homology API.
+        </div>
+      )}
 
       {/* Species grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
@@ -124,6 +140,7 @@ export function ConservationAnalysis({ geneSymbol }: Props) {
           <div
             key={sp.name}
             className="p-3 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition"
+            title={`${sp.conservation_score.toFixed(1)}% amino acid identity between human ${geneSymbol} and ${sp.common_name} ortholog${sp.ortholog_id ? ` (${sp.ortholog_id})` : ''}`}
           >
             <div className="flex items-center gap-1.5 mb-1">
               <span className="text-lg" aria-hidden>
@@ -142,6 +159,9 @@ export function ConservationAnalysis({ geneSymbol }: Props) {
               <div className="mt-1.5 text-xs text-gray-400">
                 Ortholog: <span className="font-mono text-gray-600">{sp.ortholog_symbol}</span>
               </div>
+            )}
+            {sp.conservation_score === 0 && (
+              <div className="mt-1 text-xs text-gray-300 italic">No ortholog found</div>
             )}
           </div>
         ))}
