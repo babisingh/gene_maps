@@ -14,12 +14,12 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "SpatialPharma — 3D Genome Drug Discovery",
+  title: "Gene-Maps — 3D Genome Drug Discovery",
   description:
     "Explore spatial pharmacogenomics: 3D gene interaction networks, cross-species conservation, CRISPR safety, and drug target scoring powered by real genomic data.",
-  keywords: ["spatial genomics", "pharmacogenomics", "drug discovery", "CRISPR", "gene network"],
+  keywords: ["spatial genomics", "pharmacogenomics", "drug discovery", "CRISPR", "gene network", "gene-maps"],
   openGraph: {
-    title: "SpatialPharma",
+    title: "Gene-Maps",
     description: "Consumer-friendly spatial pharmacogenomics research tool",
     type: "website",
   },

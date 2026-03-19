@@ -71,7 +71,7 @@ export async function fetchProteinInteractions(
       species: String(HUMAN_TAXON),
       limit: String(limit),
       required_score: String(confidenceThreshold),
-      caller_identity: 'spatialpharma_research_tool',
+      caller_identity: 'gene_maps_research_tool',
     });
 
     return await stringFetch<STRINGInteraction[]>('json/interaction_partners', params);

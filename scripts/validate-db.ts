@@ -43,7 +43,7 @@ async function checkConnection(
 }
 
 async function main() {
-  console.log(`\n${BOLD}${CYAN}SpatialPharma — Database Connection Validation${RESET}\n`);
+  console.log(`\n${BOLD}${CYAN}Gene-Maps — Database Connection Validation${RESET}\n`);
 
   // Check required env vars before attempting connections
   const missing: string[] = [];

@@ -1,5 +1,5 @@
 // ============================================================
-// SpatialPharma — Shared TypeScript Types
+// Gene-Maps — Shared TypeScript Types
 // Keep all cross-cutting interfaces here to avoid circular deps.
 // ============================================================
 

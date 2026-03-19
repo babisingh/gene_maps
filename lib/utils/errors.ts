@@ -1,5 +1,5 @@
 // ============================================================
-// Custom error classes for SpatialPharma
+// Custom error classes for Gene-Maps
 // Use these instead of bare Error to get structured context.
 // ============================================================
 

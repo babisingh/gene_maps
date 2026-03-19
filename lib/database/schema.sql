@@ -1,5 +1,5 @@
 -- ============================================================
--- SpatialPharma PostgreSQL Schema
+-- Gene-Maps PostgreSQL Schema
 -- Run this once against your database to create all tables.
 --
 -- Usage:

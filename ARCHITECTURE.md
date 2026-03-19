@@ -1,4 +1,4 @@
-# SpatialPharma (Gene_Maps) - Architecture Documentation
+# Gene-Maps (Gene_Maps) - Architecture Documentation
 
 > **Living document.** Update this file whenever the architecture changes.
 > Last updated: 2026-03-18
@@ -7,7 +7,7 @@
 
 ## Project Overview
 
-SpatialPharma is a consumer-friendly spatial pharmacogenomics research platform. It makes 3D genome concepts (spatial gene interactions, TAD topology, cross-species conservation) accessible while maintaining scientific accuracy.
+Gene-Maps is a consumer-friendly spatial pharmacogenomics research platform. It makes 3D genome concepts (spatial gene interactions, TAD topology, cross-species conservation) accessible while maintaining scientific accuracy.
 
 ---
 

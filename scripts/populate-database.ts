@@ -36,7 +36,7 @@ const YELLOW = '\x1b[33m';
 const BOLD   = '\x1b[1m';
 
 async function main() {
-  console.log(`\n${BOLD}${CYAN}SpatialPharma — Database Population Script${RESET}\n`);
+  console.log(`\n${BOLD}${CYAN}Gene-Maps — Database Population Script${RESET}\n`);
   console.log(`Target: ${SEED_GENES.length} genes, ${SEED_INTERACTIONS.length} interactions\n`);
 
   // ── Step 1: Validate APIs ──────────────────────────────────

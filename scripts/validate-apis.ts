@@ -24,7 +24,7 @@ const CYAN  = '\x1b[36m';
 const BOLD  = '\x1b[1m';
 
 async function main() {
-  console.log(`\n${BOLD}${CYAN}SpatialPharma — External API Validation${RESET}\n`);
+  console.log(`\n${BOLD}${CYAN}Gene-Maps — External API Validation${RESET}\n`);
   console.log('Testing connectivity to all required external APIs...\n');
 
   const checks: Array<{ name: string; fn: () => Promise<ValidationResult> }> = [

@@ -1,7 +1,7 @@
 'use client';
 
 // ============================================================
-// SpatialPharma — Home page (main dashboard).
+// Gene-Maps — Home page (main dashboard).
 // Gene search → gene info → tabbed analysis panels.
 // ============================================================
 
@@ -103,7 +103,7 @@ export default function HomePage() {
         <div className="flex items-center justify-center gap-2 mb-4">
           <Dna className="h-8 w-8 text-blue-600" />
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
-            Spatial<span className="text-blue-600">Pharma</span>
+            Gene<span className="text-blue-600">-Maps</span>
           </h1>
         </div>
         <p className="text-gray-600 text-lg max-w-2xl mx-auto mb-1">
