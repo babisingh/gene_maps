@@ -6,7 +6,7 @@
 // ============================================================
 
 import { useState, useEffect } from 'react';
-import { Globe, AlertCircle, Info } from 'lucide-react';
+import { Globe, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 import type { ConservationData } from '@/types';
 
 interface Props {
@@ -125,6 +125,13 @@ export function ConservationAnalysis({ geneSymbol }: Props) {
           </button>
         </div>
       </div>
+      {data.api_warning && (
+        <div className="flex items-start gap-2 px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800 leading-relaxed">
+          <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0 text-amber-500" />
+          <span>{data.api_warning}</span>
+        </div>
+      )}
+
       {showAvgInfo && (
         <div className="px-3 py-2 bg-blue-50 border border-blue-100 rounded-lg text-xs text-blue-700 leading-relaxed">
           The average conservation is a <strong>distance-weighted mean</strong> of ortholog percent identity across 10 model organisms.

@@ -52,7 +52,18 @@ export class ConservationAnalyzer {
     const cached = await cacheGet<ConservationData>(key);
     if (cached) return cached;
 
-    const orthologs = await fetchOrthologData(ensemblId);
+    let orthologs: Awaited<ReturnType<typeof fetchOrthologData>> = [];
+    let apiWarning: string | undefined;
+
+    try {
+      orthologs = await fetchOrthologData(ensemblId);
+    } catch (err) {
+      const msg = (err as Error).message ?? String(err);
+      console.warn(`[conservation] ENSEMBL ortholog fetch failed for ${ensemblId}: ${msg}`);
+      apiWarning =
+        'ENSEMBL ortholog API is currently unavailable — conservation scores are shown as 0%. ' +
+        'The ENSEMBL ID was resolved successfully; try again later to load real data.';
+    }
 
     // Build a map: species_name → best ortholog percent_identity
     const orthologMap = new Map<string, { perc_id: number; ortholog_id: string; ortholog_symbol: string }>();
@@ -103,6 +114,7 @@ export class ConservationAnalyzer {
       gene_symbol: geneSymbol,
       average_conservation: averageConservation,
       species: speciesConservation,
+      ...(apiWarning ? { api_warning: apiWarning } : {}),
       computed_at: new Date().toISOString(),
     };
 

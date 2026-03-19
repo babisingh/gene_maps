@@ -79,6 +79,7 @@ export interface ConservationData {
   average_conservation: number;   // 0–100
   species: SpeciesConservation[];
   constraint_score?: number;      // gnomAD pLI or similar
+  api_warning?: string;           // set when ortholog data could not be fetched
   computed_at: string;
 }
 
