@@ -122,7 +122,7 @@ export function GeneSearchInterface({
           onChange={(e) => handleInput(e.target.value)}
           onKeyDown={handleKeyDown}
           className="w-full pl-10 pr-10 py-3 rounded-xl text-sm transition
-                     bg-white/8 border border-white/15 text-white placeholder:text-white/35
+                     bg-white/90 border border-white/20 text-gray-900 placeholder:text-gray-400
                      focus:outline-none focus:ring-2 focus:ring-gm-pink/60 focus:border-gm-pink/40"
         />
         {loading && (

@@ -108,8 +108,8 @@ export function CRISPRSafetyAssessment({ geneSymbol }: Props) {
         <input
           id="edit-position" type="number" min="1"
           placeholder="Chromosomal edit position (bp)"
-          className="flex-1 px-3 py-2.5 text-sm rounded-xl border border-white/15 bg-white/8 text-white
-                     placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-gm-purple/50 focus:border-gm-purple/40
+          className="flex-1 px-3 py-2.5 text-sm rounded-xl border border-white/20 bg-white/90 text-gray-900
+                     placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gm-purple/50 focus:border-gm-purple/40
                      disabled:opacity-50"
           value={editPosition}
           onChange={e => setEditPosition(e.target.value)}
