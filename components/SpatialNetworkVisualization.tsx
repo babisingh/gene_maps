@@ -110,7 +110,7 @@ export function SpatialNetworkVisualization({
       .selectAll('line')
       .data(links)
       .join('line')
-      .attr('stroke', '#cbd5e1')
+      .attr('stroke', 'rgba(255,255,255,0.18)')
       .attr('stroke-opacity', 0.7)
       .attr('stroke-width', (d) => Math.max(1, Math.sqrt((d as NetworkLink).value ?? 1)));
 
@@ -162,7 +162,7 @@ export function SpatialNetworkVisualization({
       .text((d) => (d as NetworkNode).id)
       .attr('font-size', '11px')
       .attr('font-family', 'ui-monospace, monospace')
-      .attr('fill', '#374151')
+      .attr('fill', 'rgba(255,255,255,0.75)')
       .attr('text-anchor', 'middle')
       .attr('dy', (d) => -(10 + (d as NetworkNode).score * 14 + 4))
       .attr('pointer-events', 'none');
@@ -204,12 +204,12 @@ export function SpatialNetworkVisualization({
   return (
     <div className="space-y-3">
       {/* ── About this network ─────────────────────────────────── */}
-      <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+      <div className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white/80">
         <div className="flex items-start gap-2">
-          <Info className="mt-0.5 h-4 w-4 shrink-0 text-blue-500" />
+          <Info className="mt-0.5 h-4 w-4 shrink-0 text-gm-pink" />
           <div className="space-y-1">
             <p className="font-semibold">About this network</p>
-            <p className="leading-relaxed text-blue-700">
+            <p className="leading-relaxed text-white/65">
               Each <strong>node</strong> is a gene. The <strong>query gene</strong> (blue) is surrounded
               by its top spatial neighbors — genes whose chromosomal loci are physically close in 3D
               nuclear space, as detected by{' '}
@@ -222,13 +222,13 @@ export function SpatialNetworkVisualization({
               <strong>Click any node</strong> to see its details.
             </p>
             <button
-              className="mt-1 text-xs font-medium text-blue-600 underline underline-offset-2 hover:text-blue-800"
+              className="mt-1 text-xs font-medium text-gm-pink underline underline-offset-2 hover:text-white transition"
               onClick={() => setShowAbout((v) => !v)}
             >
               {showAbout ? 'Hide methodology ↑' : 'Show methodology ↓'}
             </button>
             {showAbout && (
-              <div className="mt-2 rounded-lg border border-blue-200 bg-white px-3 py-2.5 text-xs text-gray-700 leading-relaxed space-y-1.5">
+              <div className="mt-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-xs text-white/60 leading-relaxed space-y-1.5">
                 <p>
                   <strong>Data source:</strong> Hi-C contact data stored in a Neo4j graph database,
                   sourced from published chromosome conformation capture experiments (genome assembly
@@ -261,9 +261,9 @@ export function SpatialNetworkVisualization({
       </div>
 
       {/* ── Graph canvas ─────────────────────────────────────────── */}
-      <div className={`relative border border-gray-200 rounded-xl overflow-hidden bg-gray-50 ${className}`}>
+      <div className={`relative rounded-xl overflow-hidden border border-white/10 ${className}`} style={{ background: 'rgba(10,22,40,0.6)' }}>
         {/* Legend */}
-        <div className="absolute top-3 left-3 z-10 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-sm">
+        <div className="absolute top-3 left-3 z-10 flex flex-wrap gap-x-4 gap-y-1 text-xs text-white/55 rounded-lg px-3 py-2" style={{ background: 'rgba(15,7,38,0.75)', backdropFilter: 'blur(8px)' }}>
           {GROUP_COLORS.slice(0, 3).map((color, i) => (
             <span key={i} className="flex items-center gap-1.5">
               <span
@@ -283,24 +283,27 @@ export function SpatialNetworkVisualization({
         <div className="absolute top-3 right-3 z-10 flex flex-col gap-1">
           <button
             onClick={() => handleZoom(1.4)}
-            className="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200 bg-white/90 shadow-sm hover:bg-gray-50 transition"
+            className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/15 hover:border-gm-pink/40 hover:text-gm-pink transition"
+            style={{ background: 'rgba(15,7,38,0.75)' }}
             title="Zoom in"
           >
-            <ZoomIn className="h-3.5 w-3.5 text-gray-600" />
+            <ZoomIn className="h-3.5 w-3.5 text-white/60" />
           </button>
           <button
             onClick={() => handleZoom(1 / 1.4)}
-            className="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200 bg-white/90 shadow-sm hover:bg-gray-50 transition"
+            className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/15 hover:border-gm-pink/40 hover:text-gm-pink transition"
+            style={{ background: 'rgba(15,7,38,0.75)' }}
             title="Zoom out"
           >
-            <ZoomOut className="h-3.5 w-3.5 text-gray-600" />
+            <ZoomOut className="h-3.5 w-3.5 text-white/60" />
           </button>
           <button
             onClick={handleReset}
-            className="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200 bg-white/90 shadow-sm hover:bg-gray-50 transition"
+            className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/15 hover:border-gm-pink/40 hover:text-gm-pink transition"
+            style={{ background: 'rgba(15,7,38,0.75)' }}
             title="Reset view"
           >
-            <RotateCcw className="h-3.5 w-3.5 text-gray-600" />
+            <RotateCcw className="h-3.5 w-3.5 text-white/60" />
           </button>
         </div>
 
@@ -316,59 +319,60 @@ export function SpatialNetworkVisualization({
         {/* Hover tooltip (only when nothing is selected) */}
         {tooltip && !selected && (
           <div
-            className="pointer-events-none absolute z-10 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs shadow-lg"
-            style={{ left: tooltip.x + 12, top: tooltip.y - 10 }}
+            className="pointer-events-none absolute z-10 rounded-lg border border-white/15 px-3 py-2 text-xs shadow-lg"
+            style={{ background: 'rgba(15,7,38,0.92)', backdropFilter: 'blur(12px)', left: tooltip.x + 12, top: tooltip.y - 10 }}
           >
-            <div className="font-semibold text-gray-900">{tooltip.node.id}</div>
-            <div className="text-gray-500">
+            <div className="font-semibold text-white font-mono">{tooltip.node.id}</div>
+            <div className="text-white/55">
               Spatial score: {(tooltip.node.score * 10).toFixed(1)} / 10
             </div>
-            <div className="mt-0.5 text-gray-400">Click for details</div>
+            <div className="mt-0.5 text-white/35">Click for details</div>
           </div>
         )}
 
         {/* Click-selected node panel */}
         {selected && (
           <div
-            className="absolute z-20 w-60 rounded-xl border border-gray-200 bg-white shadow-xl text-sm"
+            className="absolute z-20 w-60 rounded-xl border border-white/15 shadow-2xl text-sm"
             style={{
+              background: 'rgba(15,7,38,0.96)', backdropFilter: 'blur(16px)',
               left: Math.min(selected.x + 16, (svgRef.current?.clientWidth ?? 800) - 256),
               top: Math.min(selected.y - 10, height - 230),
             }}
           >
-            <div className="flex items-center gap-2 border-b border-gray-100 px-3 py-2.5">
+            <div className="flex items-center gap-2 border-b border-white/10 px-3 py-2.5">
               <span
-                className="inline-block h-3 w-3 rounded-full border-2 border-white shadow-sm shrink-0"
+                className="inline-block h-3 w-3 rounded-full border border-white/30 shadow-sm shrink-0"
                 style={{
                   background: GROUP_COLORS[selected.node.group % GROUP_COLORS.length],
                 }}
               />
-              <span className="font-semibold text-gray-900 flex-1 font-mono">{selected.node.id}</span>
+              <span className="font-semibold text-white flex-1 font-mono">{selected.node.id}</span>
               <button
                 onClick={() => setSelected(null)}
-                className="text-gray-300 hover:text-gray-600 transition"
+                className="text-white/30 hover:text-white transition"
               >
                 <X className="h-3.5 w-3.5" />
               </button>
             </div>
             <div className="px-3 py-3 space-y-2.5">
               <div className="flex items-center justify-between text-xs">
-                <span className="text-gray-500">Spatial Genome Score</span>
-                <span className="font-mono font-bold text-gray-900">
+                <span className="text-white/50">Spatial Genome Score</span>
+                <span className="font-mono font-bold text-gm-pink">
                   {(selected.node.score * 10).toFixed(1)}&thinsp;/&thinsp;10
                 </span>
               </div>
               <div className="flex items-center justify-between text-xs">
-                <span className="text-gray-500">Network role</span>
-                <span className="text-gray-700">
+                <span className="text-white/50">Network role</span>
+                <span className="text-white/75">
                   {GROUP_LABELS[selected.node.group % GROUP_LABELS.length] ?? 'Neighbor'}
                 </span>
               </div>
               <div className="flex items-center justify-between text-xs">
-                <span className="text-gray-500">Cluster group</span>
-                <span className="font-mono text-gray-700">{selected.node.group}</span>
+                <span className="text-white/50">Cluster group</span>
+                <span className="font-mono text-white/75">{selected.node.group}</span>
               </div>
-              <div className="pt-2 border-t border-gray-100 text-xs text-gray-400 leading-relaxed">
+              <div className="pt-2 border-t border-white/10 text-xs text-white/35 leading-relaxed">
                 This gene&apos;s chromosomal locus makes frequent Hi-C contacts with the query gene,
                 indicating they share a topological domain or chromatin loop in the nucleus.
               </div>
@@ -378,7 +382,7 @@ export function SpatialNetworkVisualization({
       </div>
 
       {/* ── Footer summary ─────────────────────────────────────── */}
-      <p className="text-xs text-gray-400 text-right">
+      <p className="text-xs text-white/30 text-right font-mono">
         {data.nodes.length} genes &middot; {data.links.length} Hi-C contacts &middot; Scroll to zoom &middot; Drag to pan &middot; Click node for details
       </p>
     </div>

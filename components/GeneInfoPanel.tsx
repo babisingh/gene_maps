@@ -130,67 +130,56 @@ export function GeneInfoPanel({ geneSymbol }: Props) {
 
   if (loading) {
     return (
-      <div className="animate-pulse flex gap-4 p-4 bg-white border border-gray-200 rounded-xl">
+      <div className="animate-pulse flex gap-4 p-4 glass rounded-xl">
         <div className="flex-1 space-y-2">
-          <div className="h-4 bg-gray-200 rounded w-3/4" />
-          <div className="h-3 bg-gray-100 rounded w-1/2" />
+          <div className="h-4 bg-white/10 rounded w-3/4" />
+          <div className="h-3 bg-white/6 rounded w-1/2" />
         </div>
         <div className="flex gap-2">
-          <div className="h-6 bg-gray-100 rounded w-20" />
-          <div className="h-6 bg-gray-100 rounded w-16" />
+          <div className="h-6 bg-white/8 rounded w-20" />
+          <div className="h-6 bg-white/6 rounded w-16" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="p-4 bg-white border border-gray-200 rounded-xl shadow-sm">
+    <div className="p-4 glass rounded-xl">
       <div className="flex flex-wrap items-start gap-4">
         {/* Description + locus */}
         <div className="flex-1 min-w-0 space-y-2">
-          {/* Gene symbol badge + description */}
           <div className="flex items-start gap-2">
-            <span className="inline-flex items-center gap-1 shrink-0 px-2 py-0.5 rounded-md bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-semibold font-mono">
+            <span className="inline-flex items-center gap-1 shrink-0 px-2 py-0.5 rounded-md bg-gm-pink/15 border border-gm-pink/30 text-gm-pink text-xs font-semibold font-mono">
               <Dna className="h-3 w-3" />
               {geneSymbol}
             </span>
             {info.description ? (
-              <p className="text-sm text-gray-600 leading-relaxed line-clamp-2">
-                {info.description}
-              </p>
+              <p className="text-sm text-white/70 leading-relaxed line-clamp-2">{info.description}</p>
             ) : (
-              <p className="text-sm text-gray-400 italic">
-                No description available.
-              </p>
+              <p className="text-sm text-white/30 italic">No description available.</p>
             )}
           </div>
 
           {/* Locus row */}
-          <div className="flex flex-wrap gap-3 text-xs text-gray-500">
+          <div className="flex flex-wrap gap-3 text-xs text-white/45">
             {info.chromosome && info.start_pos != null && info.end_pos != null && (
               <span className="flex items-center gap-1">
-                <MapPin className="h-3 w-3 text-gray-400" />
-                <span className="font-mono">
-                  {formatPosition(info.chromosome, info.start_pos, info.end_pos)}
-                </span>
-                {info.strand && (
-                  <span className="text-gray-400 font-mono">({info.strand})</span>
-                )}
+                <MapPin className="h-3 w-3 text-white/30" />
+                <span className="font-mono">{formatPosition(info.chromosome, info.start_pos, info.end_pos)}</span>
+                {info.strand && <span className="text-white/30 font-mono">({info.strand})</span>}
               </span>
             )}
             {info.biotype && (
               <span className="flex items-center gap-1">
-                <Tag className="h-3 w-3 text-gray-400" />
+                <Tag className="h-3 w-3 text-white/30" />
                 {BIOTYPE_LABELS[info.biotype] ?? info.biotype}
               </span>
             )}
             {info.ensembl_id && (
-              <span className="flex items-center gap-1 font-mono text-gray-400">
-                {info.ensembl_id}
-              </span>
+              <span className="font-mono text-white/30">{info.ensembl_id}</span>
             )}
             {info.assembly && (
-              <span className="text-gray-300">{info.assembly}</span>
+              <span className="text-white/20">{info.assembly}</span>
             )}
           </div>
         </div>
@@ -198,34 +187,22 @@ export function GeneInfoPanel({ geneSymbol }: Props) {
         {/* External links */}
         <div className="flex gap-2 shrink-0 flex-wrap">
           {info.ensembl_id && (
-            <a
-              href={buildEnsemblUrl(info.ensembl_id)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-green-50 text-green-700
-                         border border-green-200 rounded-lg hover:bg-green-100 transition"
-            >
+            <a href={buildEnsemblUrl(info.ensembl_id)} target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-lg border border-white/15
+                         text-white/60 hover:text-gm-pink hover:border-gm-pink/40 transition">
               ENSEMBL <ExternalLink className="h-3 w-3" />
             </a>
           )}
           {info.chromosome && info.start_pos != null && info.end_pos != null && (
-            <a
-              href={buildUCSCUrl(info.chromosome, info.start_pos, info.end_pos)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-blue-50 text-blue-700
-                         border border-blue-200 rounded-lg hover:bg-blue-100 transition"
-            >
+            <a href={buildUCSCUrl(info.chromosome, info.start_pos, info.end_pos)} target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-lg border border-white/15
+                         text-white/60 hover:text-gm-pink hover:border-gm-pink/40 transition">
               UCSC <ExternalLink className="h-3 w-3" />
             </a>
           )}
-          <a
-            href={buildGeneCardsUrl(geneSymbol)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-purple-50 text-purple-700
-                       border border-purple-200 rounded-lg hover:bg-purple-100 transition"
-          >
+          <a href={buildGeneCardsUrl(geneSymbol)} target="_blank" rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-lg border border-white/15
+                       text-white/60 hover:text-gm-purple hover:border-gm-purple/40 transition">
             GeneCards <ExternalLink className="h-3 w-3" />
           </a>
         </div>

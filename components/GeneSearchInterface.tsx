@@ -121,9 +121,9 @@ export function GeneSearchInterface({
           value={query}
           onChange={(e) => handleInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-xl
-                     focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                     bg-white text-gray-900 text-sm shadow-sm transition"
+          className="w-full pl-10 pr-10 py-3 rounded-xl text-sm transition
+                     bg-white/8 border border-white/15 text-white placeholder:text-white/35
+                     focus:outline-none focus:ring-2 focus:ring-gm-pink/60 focus:border-gm-pink/40"
         />
         {loading && (
           <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-gray-400" />
@@ -141,29 +141,30 @@ export function GeneSearchInterface({
 
       {/* Error */}
       {error && (
-        <p className="mt-1 text-xs text-red-500 pl-2">{error}</p>
+        <p className="mt-1 text-xs text-red-400 pl-2">{error}</p>
       )}
 
       {/* Dropdown */}
       {suggestions.length > 0 && (
         <ul
           role="listbox"
-          className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden"
+          className="absolute z-20 w-full mt-1 rounded-xl overflow-hidden shadow-2xl border border-white/10"
+          style={{ background: 'rgba(15,7,38,0.97)', backdropFilter: 'blur(20px)' }}
         >
           {suggestions.map((gene, idx) => (
             <li key={gene.symbol} role="option" aria-selected={idx === activeIndex}>
               <button
                 className={`w-full px-4 py-3 text-left transition
-                  ${idx === activeIndex ? 'bg-blue-50' : 'hover:bg-gray-50'}
-                  ${idx !== suggestions.length - 1 ? 'border-b border-gray-100' : ''}`}
+                  ${idx === activeIndex ? 'bg-gm-pink/15' : 'hover:bg-white/8'}
+                  ${idx !== suggestions.length - 1 ? 'border-b border-white/8' : ''}`}
                 onClick={() => handleSelect(gene)}
                 onMouseEnter={() => setActiveIndex(idx)}
               >
                 <div className="flex items-center gap-3">
-                  <span className="font-semibold text-blue-700 text-sm w-16 shrink-0">
+                  <span className="font-semibold text-gm-pink text-sm font-mono w-16 shrink-0">
                     {gene.symbol}
                   </span>
-                  <span className="text-gray-500 text-xs truncate">{gene.description}</span>
+                  <span className="text-white/50 text-xs truncate">{gene.description}</span>
                 </div>
               </button>
             </li>
