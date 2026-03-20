@@ -14,16 +14,6 @@ import { fetchProteinInteractions } from '../data-fetchers/string-db';
 import { cacheGet, cacheSet, cacheKey } from '../database/redis';
 import type { DrugTargetScore } from '../../types';
 
-// Known drug categories mapped to STRING functional annotations
-// (used for labeling — not for scoring)
-const DRUG_CLASS_KEYWORDS: Record<string, string[]> = {
-  'Kinase inhibitor': ['kinase', 'phosphorylation', 'signal transduction'],
-  'Monoclonal antibody': ['receptor', 'extracellular', 'membrane'],
-  'Small molecule': ['enzyme', 'active site', 'binding'],
-  'Gene therapy': ['transcription factor', 'nucleic acid', 'regulation'],
-  'CRISPR target': ['disease', 'mutation', 'pathogenic'],
-};
-
 const CACHE_TTL = 3600;
 
 export class DrugTargetScorer {
@@ -40,7 +30,7 @@ export class DrugTargetScorer {
     const cached = await cacheGet<DrugTargetScore>(key);
     if (cached) return cached;
 
-    const [spatialResult, tissueResult, interactionResult, topTissuesResult] = await Promise.allSettled([
+    const [spatialResult, tissueResult, interactionResult] = await Promise.allSettled([
       this.scoringEngine.calculateSpatialScore(geneSymbol, ensemblId),
       fetchTissueSpecificityScore(geneSymbol),
       fetchProteinInteractions(geneSymbol, 700, 10),

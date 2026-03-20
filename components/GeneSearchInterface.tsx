@@ -47,7 +47,7 @@ export function GeneSearchInterface({
       if (!res.ok) throw new Error(`Search failed: ${res.statusText}`);
       const data: GeneSuggestion[] = await res.json();
       setSuggestions(data);
-    } catch (err) {
+    } catch {
       setError('Search unavailable. Please try again.');
       setSuggestions([]);
     } finally {
@@ -116,6 +116,7 @@ export function GeneSearchInterface({
           role="combobox"
           aria-autocomplete="list"
           aria-expanded={suggestions.length > 0}
+          aria-controls="gene-suggestions"
           aria-label="Search genes"
           placeholder={placeholder}
           value={query}
@@ -147,6 +148,7 @@ export function GeneSearchInterface({
       {/* Dropdown */}
       {suggestions.length > 0 && (
         <ul
+          id="gene-suggestions"
           role="listbox"
           className="absolute z-20 w-full mt-1 rounded-xl overflow-hidden shadow-2xl border border-white/10"
           style={{ background: 'rgba(15,7,38,0.97)', backdropFilter: 'blur(20px)' }}

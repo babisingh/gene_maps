@@ -2,9 +2,8 @@
 // PostgreSQL query helpers — typed wrappers around raw SQL.
 // ============================================================
 
-import { query, transaction } from './postgres';
+import { query } from './postgres';
 import type { Gene, SpeciesConservation, CRISPRSafetyData } from '../../types';
-import { PoolClient } from 'pg';
 
 // ── Gene Queries ─────────────────────────────────────────────
 
