@@ -1,33 +1,22 @@
+import Link from 'next/link';
+
 export const dynamic = 'force-dynamic';
 
 export default function NotFound() {
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'linear-gradient(135deg, #0f0726 0%, #0a1628 100%)',
-        color: 'white',
-        fontFamily: 'monospace',
-        gap: '1rem',
-      }}
-    >
-      <h1 style={{ fontSize: '4rem', fontWeight: 700, margin: 0, color: '#FF8CA8' }}>404</h1>
-      <p style={{ color: 'rgba(255,255,255,0.5)', margin: 0 }}>Page not found</p>
-      <a
+    <div className="min-h-screen flex flex-col items-center justify-center text-center px-4">
+      <h1 className="text-6xl font-bold gm-text mb-4">404</h1>
+      <h2 className="text-2xl font-semibold text-white mb-2">Page Not Found</h2>
+      <p className="text-white/50 mb-8 max-w-md">
+        The page you are looking for does not exist or has been moved.
+      </p>
+      <Link
         href="/"
-        style={{
-          marginTop: '0.5rem',
-          color: '#FF8CA8',
-          textDecoration: 'none',
-          fontSize: '0.875rem',
-        }}
+        className="px-6 py-3 rounded-xl font-medium text-white transition"
+        style={{ background: 'linear-gradient(135deg, #FF8CA8, #a855f7)' }}
       >
-        ← Return to Gene-Maps
-      </a>
+        Return Home
+      </Link>
     </div>
   );
 }
