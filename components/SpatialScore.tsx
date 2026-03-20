@@ -70,8 +70,8 @@ const COMPONENT_META: Record<
     weight: 10,
     description:
       'Expression plasticity from GTEx (inverse of Tau tissue specificity index). ' +
-      'Broadly expressed genes (Tau near 0) score near 10 — ubiquitous expression indicates active regulatory machinery across many cell types. ' +
-      'Tissue-restricted genes (Tau near 1) score near 0. Full 0–10 range used for maximum granularity.',
+      'Broadly expressed genes (Tau near 0) score near 10 — ubiquitous expression is a proxy for constitutively open, euchromatic (A-compartment) chromatin, which correlates with spatial centrality in the nucleus. ' +
+      'Tissue-restricted genes (Tau near 1) tend to reside in conditionally accessible regions and score near 0. Full 0–10 range used for maximum granularity.',
     color: '#ef4444',
   },
 };
