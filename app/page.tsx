@@ -82,14 +82,31 @@ export default function HomePage() {
       <main>
         {/* ── Hero ─────────────────────────────────────────── */}
         <section className="px-4 py-12 md:py-16 text-center max-w-4xl mx-auto">
-          <h1 className="text-3xl md:text-4xl font-bold mb-3">
+          <h1 className="text-3xl md:text-4xl font-bold mb-5">
             <span className="gm-text">Explore the 3D Genome</span>
             <br />
             <span className="text-white/80 text-2xl md:text-3xl font-normal">Architecture of Drug Targets</span>
           </h1>
-          <p className="text-white/50 text-sm max-w-xl mx-auto mb-8 font-mono tracking-wide">
-            ENSEMBL · UCSC PhyloP · STRING · GTEx · Hi-C
-          </p>
+
+          {/* App introduction */}
+          <div className="max-w-2xl mx-auto mb-8 space-y-1.5 text-center">
+            <p className="text-white/80 text-base leading-relaxed">
+              Gene-Maps decodes the spatial language of the human genome — where a gene
+              lives in 3D nuclear space is as critical as what it encodes.
+            </p>
+            <p className="text-white/60 text-sm leading-relaxed">
+              Every query integrates live data across five dimensions: evolutionary conservation,
+              chromatin accessibility, protein interaction topology, Hi-C contact frequency,
+              and tissue-resolved expression — converging into a single spatial pharmacogenomics score.
+            </p>
+            <p className="text-white/50 text-sm leading-relaxed">
+              Identify high-confidence drug targets, assess CRISPR edit safety at base-pair
+              resolution, and visualise how genome architecture shapes therapeutic opportunity.
+            </p>
+            <p className="text-white/35 text-xs font-mono tracking-widest uppercase mt-3">
+              ENSEMBL · UCSC PhyloP · STRING · GTEx v8 · Hi-C
+            </p>
+          </div>
 
           <div className="flex justify-center">
             <GeneSearchInterface onGeneSelect={handleGeneSelect} />
