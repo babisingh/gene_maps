@@ -7,7 +7,6 @@
 // ============================================================
 
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Dna, FlaskConical, Network, Globe, Scissors, Pill } from 'lucide-react';
 import { DnaBanner } from '@/components/DnaBanner';
 import { GeneSearchInterface } from '@/components/GeneSearchInterface';
@@ -130,15 +129,8 @@ export default function HomePage() {
         </section>
 
         {/* ── Analysis panel ───────────────────────────────── */}
-        <AnimatePresence>
           {selectedGene && (
-            <motion.section
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-              className="max-w-5xl mx-auto px-4 pb-16 space-y-4"
-            >
+            <section className="max-w-5xl mx-auto px-4 pb-16 space-y-4 gm-fade-in">
               {/* Gene title bar */}
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2 px-4 py-2 glass rounded-xl">
@@ -171,14 +163,7 @@ export default function HomePage() {
 
               {/* Tab content */}
               <div className="glass rounded-xl p-6 min-h-[400px]">
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={activeTab}
-                    initial={{ opacity: 0, x: 8 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -8 }}
-                    transition={{ duration: 0.18 }}
-                  >
+                  <div key={activeTab} className="gm-fade-in">
                     {activeTab === 'network' && (
                       <div className="space-y-4">
                         <div className="flex items-center gap-2">
@@ -210,12 +195,10 @@ export default function HomePage() {
                     {activeTab === 'conservation' && <ConservationAnalysis   geneSymbol={selectedGene} />}
                     {activeTab === 'crispr'       && <CRISPRSafetyAssessment geneSymbol={selectedGene} />}
                     {activeTab === 'drug'         && <DrugTargetScore        geneSymbol={selectedGene} />}
-                  </motion.div>
-                </AnimatePresence>
+                  </div>
               </div>
-            </motion.section>
+            </section>
           )}
-        </AnimatePresence>
 
         {/* ── Feature cards + About (empty state) ─────────── */}
         {!selectedGene && (
