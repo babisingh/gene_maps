@@ -4,14 +4,27 @@
 // GeneInfoPanel — compact gene metadata header.
 // Shows chromosome locus, biotype, description, and external
 // database links (ENSEMBL, UCSC Genome Browser, GeneCards).
+// Fetches from local DB first; falls back to ENSEMBL API.
 // ============================================================
 
 import { useState, useEffect } from 'react';
-import { ExternalLink, MapPin, Tag } from 'lucide-react';
+import { ExternalLink, MapPin, Tag, Dna } from 'lucide-react';
 import type { Gene } from '@/types';
 
 interface Props {
   geneSymbol: string;
+}
+
+interface EnsemblInfo {
+  symbol: string;
+  ensembl_id: string;
+  description: string | null;
+  chromosome: string;
+  start_pos: number;
+  end_pos: number;
+  strand: string;
+  biotype: string;
+  assembly: string;
 }
 
 // Biotype labels mapping ENSEMBL biotype IDs to human-readable strings
@@ -49,43 +62,83 @@ function buildGeneCardsUrl(symbol: string): string {
   return `https://www.genecards.org/cgi-bin/carddisp.pl?gene=${symbol}`;
 }
 
+// Merge DB gene record with ENSEMBL info, preferring DB values where present
+function mergeInfo(
+  db: Gene | null,
+  ensembl: EnsemblInfo | null
+): {
+  description: string | null;
+  ensembl_id: string | null;
+  chromosome: string | null;
+  start_pos: number | null;
+  end_pos: number | null;
+  biotype: string | null;
+  strand: string | null;
+  assembly: string | null;
+} {
+  return {
+    description: db?.description || ensembl?.description || null,
+    ensembl_id: db?.ensembl_id || ensembl?.ensembl_id || null,
+    chromosome: db?.chromosome || ensembl?.chromosome || null,
+    start_pos: db?.start_pos ?? ensembl?.start_pos ?? null,
+    end_pos: db?.end_pos ?? ensembl?.end_pos ?? null,
+    biotype: db?.biotype || ensembl?.biotype || null,
+    strand: ensembl?.strand ?? null,
+    assembly: ensembl?.assembly ?? null,
+  };
+}
+
 export function GeneInfoPanel({ geneSymbol }: Props) {
-  const [gene, setGene] = useState<Gene | null>(null);
+  const [dbGene, setDbGene] = useState<Gene | null>(null);
+  const [ensemblInfo, setEnsemblInfo] = useState<EnsemblInfo | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!geneSymbol) return;
     let cancelled = false;
 
-    const fetchGene = async () => {
+    const fetchAll = async () => {
       setLoading(true);
-      setGene(null);
-      try {
-        // Try the PostgreSQL gene endpoint first
-        const res = await fetch(`/api/genes/search?q=${encodeURIComponent(geneSymbol)}`);
-        if (res.ok) {
-          const results: Gene[] = await res.json();
-          const match = results.find(
-            (g) => g.symbol.toUpperCase() === geneSymbol.toUpperCase()
-          );
-          if (match && !cancelled) setGene(match);
-        }
-      } catch {
-        // Non-critical — panel degrades gracefully if gene metadata is missing
-      } finally {
-        if (!cancelled) setLoading(false);
+      setDbGene(null);
+      setEnsemblInfo(null);
+
+      // Fetch local DB and ENSEMBL in parallel
+      const [dbRes, ensemblRes] = await Promise.allSettled([
+        fetch(`/api/genes/search?q=${encodeURIComponent(geneSymbol)}`).then(async (r) => {
+          if (!r.ok) return null;
+          const results: Gene[] = await r.json();
+          return results.find((g) => g.symbol.toUpperCase() === geneSymbol.toUpperCase()) ?? null;
+        }),
+        fetch(`/api/genes/info/${encodeURIComponent(geneSymbol)}`).then(async (r) => {
+          if (!r.ok) return null;
+          return r.json() as Promise<EnsemblInfo>;
+        }),
+      ]);
+
+      if (!cancelled) {
+        if (dbRes.status === 'fulfilled' && dbRes.value) setDbGene(dbRes.value);
+        if (ensemblRes.status === 'fulfilled' && ensemblRes.value) setEnsemblInfo(ensemblRes.value);
+        setLoading(false);
       }
     };
 
-    fetchGene();
+    fetchAll();
     return () => { cancelled = true; };
   }, [geneSymbol]);
+
+  const info = mergeInfo(dbGene, ensemblInfo);
 
   if (loading) {
     return (
       <div className="animate-pulse flex gap-4 p-4 bg-white border border-gray-200 rounded-xl">
-        <div className="h-4 bg-gray-200 rounded w-64" />
-        <div className="h-4 bg-gray-100 rounded w-48" />
+        <div className="flex-1 space-y-2">
+          <div className="h-4 bg-gray-200 rounded w-3/4" />
+          <div className="h-3 bg-gray-100 rounded w-1/2" />
+        </div>
+        <div className="flex gap-2">
+          <div className="h-6 bg-gray-100 rounded w-20" />
+          <div className="h-6 bg-gray-100 rounded w-16" />
+        </div>
       </div>
     );
   }
@@ -93,42 +146,60 @@ export function GeneInfoPanel({ geneSymbol }: Props) {
   return (
     <div className="p-4 bg-white border border-gray-200 rounded-xl shadow-sm">
       <div className="flex flex-wrap items-start gap-4">
-        {/* Description */}
-        <div className="flex-1 min-w-0">
-          {gene?.description ? (
-            <p className="text-sm text-gray-600 leading-relaxed line-clamp-2">
-              {gene.description}
-            </p>
-          ) : (
-            <p className="text-sm text-gray-400 italic">
-              Description loading… (will appear after database is seeded)
-            </p>
-          )}
+        {/* Description + locus */}
+        <div className="flex-1 min-w-0 space-y-2">
+          {/* Gene symbol badge + description */}
+          <div className="flex items-start gap-2">
+            <span className="inline-flex items-center gap-1 shrink-0 px-2 py-0.5 rounded-md bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-semibold font-mono">
+              <Dna className="h-3 w-3" />
+              {geneSymbol}
+            </span>
+            {info.description ? (
+              <p className="text-sm text-gray-600 leading-relaxed line-clamp-2">
+                {info.description}
+              </p>
+            ) : (
+              <p className="text-sm text-gray-400 italic">
+                No description available.
+              </p>
+            )}
+          </div>
 
-          {/* Locus + biotype */}
-          {gene?.chromosome && gene.start_pos && gene.end_pos && (
-            <div className="mt-2 flex flex-wrap gap-3 text-xs text-gray-500">
+          {/* Locus row */}
+          <div className="flex flex-wrap gap-3 text-xs text-gray-500">
+            {info.chromosome && info.start_pos != null && info.end_pos != null && (
               <span className="flex items-center gap-1">
                 <MapPin className="h-3 w-3 text-gray-400" />
                 <span className="font-mono">
-                  {formatPosition(gene.chromosome, gene.start_pos, gene.end_pos)}
+                  {formatPosition(info.chromosome, info.start_pos, info.end_pos)}
                 </span>
+                {info.strand && (
+                  <span className="text-gray-400 font-mono">({info.strand})</span>
+                )}
               </span>
-              {gene.biotype && (
-                <span className="flex items-center gap-1">
-                  <Tag className="h-3 w-3 text-gray-400" />
-                  {BIOTYPE_LABELS[gene.biotype] ?? gene.biotype}
-                </span>
-              )}
-            </div>
-          )}
+            )}
+            {info.biotype && (
+              <span className="flex items-center gap-1">
+                <Tag className="h-3 w-3 text-gray-400" />
+                {BIOTYPE_LABELS[info.biotype] ?? info.biotype}
+              </span>
+            )}
+            {info.ensembl_id && (
+              <span className="flex items-center gap-1 font-mono text-gray-400">
+                {info.ensembl_id}
+              </span>
+            )}
+            {info.assembly && (
+              <span className="text-gray-300">{info.assembly}</span>
+            )}
+          </div>
         </div>
 
         {/* External links */}
         <div className="flex gap-2 shrink-0 flex-wrap">
-          {gene?.ensembl_id && (
+          {info.ensembl_id && (
             <a
-              href={buildEnsemblUrl(gene.ensembl_id)}
+              href={buildEnsemblUrl(info.ensembl_id)}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-green-50 text-green-700
@@ -137,9 +208,9 @@ export function GeneInfoPanel({ geneSymbol }: Props) {
               ENSEMBL <ExternalLink className="h-3 w-3" />
             </a>
           )}
-          {gene?.chromosome && gene.start_pos && gene.end_pos && (
+          {info.chromosome && info.start_pos != null && info.end_pos != null && (
             <a
-              href={buildUCSCUrl(gene.chromosome, gene.start_pos, gene.end_pos)}
+              href={buildUCSCUrl(info.chromosome, info.start_pos, info.end_pos)}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-blue-50 text-blue-700

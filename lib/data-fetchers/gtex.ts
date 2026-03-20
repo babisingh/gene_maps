@@ -17,10 +17,15 @@ const TIMEOUT_MS = parseInt(process.env.EXTERNAL_API_TIMEOUT_MS ?? '10000', 10);
 
 interface GTExExpressionResult {
   geneSymbol: string;
+  // GTEx v2 API uses tissueSiteDetailId (no tissueSiteDetail field in response)
   tissueSiteDetailId: string;
-  tissueSiteDetail: string;
   median: number;
   unit: string;
+}
+
+interface GTExReferenceGene {
+  gencodeId: string; // versioned ENSEMBL ID, e.g. "ENSG00000141510.16"
+  geneSymbol: string;
 }
 
 async function gtexFetch<T>(path: string): Promise<T> {
@@ -46,6 +51,24 @@ async function gtexFetch<T>(path: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+// ── Internal helpers ──────────────────────────────────────────
+
+/**
+ * Resolve a gene symbol to the GTEx versioned gencodeId.
+ * GTEx v2 medianGeneExpression requires gencodeId (e.g. "ENSG00000141510.16"),
+ * not a plain symbol or unversioned ENSEMBL ID.
+ */
+async function fetchGencodeId(geneSymbol: string): Promise<string> {
+  const data = await gtexFetch<{ data: GTExReferenceGene[] }>(
+    `/reference/gene?geneId=${encodeURIComponent(geneSymbol)}&datasetId=gtex_v8`
+  );
+  const gene = data?.data?.[0];
+  if (!gene?.gencodeId) {
+    throw new Error(`GTEx reference gene not found for ${geneSymbol}`);
+  }
+  return gene.gencodeId;
+}
+
 // ── Public functions ──────────────────────────────────────────
 
 /**
@@ -56,8 +79,9 @@ export async function fetchGeneExpression(
   geneSymbol: string
 ): Promise<GTExExpressionResult[]> {
   try {
+    const gencodeId = await fetchGencodeId(geneSymbol);
     const data = await gtexFetch<{ data: GTExExpressionResult[] }>(
-      `/expression/medianGeneExpression?geneId=${geneSymbol}&datasetId=gtex_v8`
+      `/expression/medianGeneExpression?gencodeId=${encodeURIComponent(gencodeId)}&datasetId=gtex_v8`
     );
     return (data?.data ?? []).sort((a, b) => b.median - a.median);
   } catch (err) {
@@ -67,11 +91,12 @@ export async function fetchGeneExpression(
 }
 
 /**
- * Calculate tissue specificity score (Tau index, 0–1).
- * Tau = 0 → ubiquitously expressed.
- * Tau = 1 → expressed in exactly one tissue.
+ * Calculate tissue specificity score using the Tau index (Yanai et al. 2005).
+ *   τ = Σᵢ(1 − x̂ᵢ) / (n − 1),  x̂ᵢ = xᵢ / max(xᵢ)
+ *   τ → 0: ubiquitously expressed across all tissues
+ *   τ → 1: expressed in exactly one tissue
  *
- * Returns a 0–10 scaled score.
+ * Returns score scaled to 0–10.
  */
 export async function fetchTissueSpecificityScore(geneSymbol: string): Promise<number> {
   const expressions = await fetchGeneExpression(geneSymbol);
@@ -97,7 +122,8 @@ export async function fetchTopExpressingTissues(
 ): Promise<{ tissue: string; median_tpm: number }[]> {
   const expressions = await fetchGeneExpression(geneSymbol);
   return expressions.slice(0, topN).map((e) => ({
-    tissue: e.tissueSiteDetail,
+    // tissueSiteDetailId uses underscores; replace for readable display
+    tissue: e.tissueSiteDetailId.replace(/_/g, ' '),
     median_tpm: e.median,
   }));
 }

@@ -7,6 +7,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
+import { Info, X, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 import type { NetworkData, NetworkNode, NetworkLink } from '@/types';
 
 interface Props {
@@ -25,6 +26,20 @@ const GROUP_COLORS = [
   '#ef4444', // red
 ];
 
+const GROUP_LABELS = [
+  'Query gene',
+  'Direct spatial neighbor',
+  'Secondary neighbor',
+  'Tertiary neighbor',
+  'Distant neighbor',
+];
+
+interface SelectedNode {
+  node: NetworkNode;
+  x: number;
+  y: number;
+}
+
 export function SpatialNetworkVisualization({
   data,
   width = 800,
@@ -32,12 +47,17 @@ export function SpatialNetworkVisualization({
   className = '',
 }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
+  const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
+  const svgSelRef = useRef<d3.Selection<SVGSVGElement, unknown, null, undefined> | null>(null);
   const [tooltip, setTooltip] = useState<{ x: number; y: number; node: NetworkNode } | null>(null);
+  const [selected, setSelected] = useState<SelectedNode | null>(null);
+  const [showAbout, setShowAbout] = useState(false);
 
   useEffect(() => {
     if (!data || !svgRef.current || data.nodes.length === 0) return;
 
     const svg = d3.select(svgRef.current);
+    svgSelRef.current = svg;
     svg.selectAll('*').remove();
 
     // Arrow marker for directed edges
@@ -78,6 +98,7 @@ export function SpatialNetworkVisualization({
     const zoom = d3.zoom<SVGSVGElement, unknown>().scaleExtent([0.3, 3]).on('zoom', (event) => {
       g.attr('transform', event.transform);
     });
+    zoomRef.current = zoom;
     svg.call(zoom);
 
     const g = svg.append('g');
@@ -125,10 +146,14 @@ export function SpatialNetworkVisualization({
       .on('mouseover', (event, d) => {
         setTooltip({ x: event.offsetX, y: event.offsetY, node: d as NetworkNode });
       })
-      .on('mouseout', () => setTooltip(null));
+      .on('mouseout', () => setTooltip(null))
+      .on('click', (event, d) => {
+        event.stopPropagation();
+        setSelected({ node: d as NetworkNode, x: event.offsetX, y: event.offsetY });
+      });
 
     // Labels
-    const label = g
+    g
       .append('g')
       .attr('class', 'labels')
       .selectAll('text')
@@ -142,6 +167,9 @@ export function SpatialNetworkVisualization({
       .attr('dy', (d) => -(10 + (d as NetworkNode).score * 14 + 4))
       .attr('pointer-events', 'none');
 
+    // Dismiss selected node on canvas click
+    svg.on('click', () => setSelected(null));
+
     simulation.on('tick', () => {
       link
         .attr('x1', (d) => (d.source as d3.SimulationNodeDatum).x ?? 0)
@@ -153,7 +181,7 @@ export function SpatialNetworkVisualization({
         .attr('cx', (d) => d.x ?? 0)
         .attr('cy', (d) => d.y ?? 0);
 
-      label
+      g.selectAll<SVGTextElement, NetworkNode & d3.SimulationNodeDatum>('.labels text')
         .attr('x', (d) => d.x ?? 0)
         .attr('y', (d) => d.y ?? 0);
     });
@@ -163,43 +191,196 @@ export function SpatialNetworkVisualization({
     };
   }, [data, width, height]);
 
+  const handleZoom = (factor: number) => {
+    if (!svgSelRef.current || !zoomRef.current) return;
+    svgSelRef.current.transition().duration(300).call(zoomRef.current.scaleBy, factor);
+  };
+
+  const handleReset = () => {
+    if (!svgSelRef.current || !zoomRef.current) return;
+    svgSelRef.current.transition().duration(400).call(zoomRef.current.transform, d3.zoomIdentity);
+  };
+
   return (
-    <div className={`relative border border-gray-200 rounded-xl overflow-hidden bg-gray-50 ${className}`}>
-      {/* Legend */}
-      <div className="absolute top-3 left-3 flex gap-3 text-xs text-gray-500 bg-white/80 backdrop-blur-sm rounded-lg px-3 py-2">
-        <span className="flex items-center gap-1">
-          <span className="inline-block w-3 h-3 rounded-full bg-blue-500" /> Center gene
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="inline-block w-3 h-3 rounded-full bg-purple-500" /> Neighbor
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="text-gray-400">— </span> Hi-C frequency
-        </span>
+    <div className="space-y-3">
+      {/* ── About this network ─────────────────────────────────── */}
+      <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+        <div className="flex items-start gap-2">
+          <Info className="mt-0.5 h-4 w-4 shrink-0 text-blue-500" />
+          <div className="space-y-1">
+            <p className="font-semibold">About this network</p>
+            <p className="leading-relaxed text-blue-700">
+              Each <strong>node</strong> is a gene. The <strong>query gene</strong> (blue) is surrounded
+              by its top spatial neighbors — genes whose chromosomal loci are physically close in 3D
+              nuclear space, as detected by{' '}
+              <abbr title="Hi-C: genome-wide chromosome conformation capture — maps DNA contacts across the entire genome by crosslinking, cutting, and sequencing pairs of genomic regions found in close proximity in the nucleus">
+                Hi-C
+              </abbr>
+              . Edges connect genes whose loci contact each other in the nucleus.{' '}
+              <strong>Node size</strong> = Spatial Genome Score.{' '}
+              <strong>Edge thickness</strong> = Hi-C contact frequency.{' '}
+              <strong>Click any node</strong> to see its details.
+            </p>
+            <button
+              className="mt-1 text-xs font-medium text-blue-600 underline underline-offset-2 hover:text-blue-800"
+              onClick={() => setShowAbout((v) => !v)}
+            >
+              {showAbout ? 'Hide methodology ↑' : 'Show methodology ↓'}
+            </button>
+            {showAbout && (
+              <div className="mt-2 rounded-lg border border-blue-200 bg-white px-3 py-2.5 text-xs text-gray-700 leading-relaxed space-y-1.5">
+                <p>
+                  <strong>Data source:</strong> Hi-C contact data stored in a Neo4j graph database,
+                  sourced from published chromosome conformation capture experiments (genome assembly
+                  GRCh38/hg38).
+                </p>
+                <p>
+                  <strong>Edges (lines):</strong> Each edge represents a Hi-C contact between two gene
+                  loci. Thicker lines = higher contact frequency = the two genes are more often found
+                  in the same topologically associating domain (TAD) or chromatin loop in the nucleus.
+                </p>
+                <p>
+                  <strong>Node color:</strong> Cluster group. Blue = query gene. Purple = direct
+                  first-degree spatial neighbors. Green / amber = more distant neighbors in the
+                  interaction graph.
+                </p>
+                <p>
+                  <strong>Node size:</strong> Proportional to Spatial Genome Score (0–10). A larger
+                  node means the gene scores higher across conservation, chromatin accessibility,
+                  network centrality, Hi-C interaction strength, and expression plasticity.
+                </p>
+                <p>
+                  <strong>Layout:</strong> D3 force-directed simulation. Nodes repel each other; edges
+                  attract connected nodes. The final layout clusters frequently-interacting genes
+                  together, mirroring their spatial proximity in the nucleus.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
-      <svg
-        ref={svgRef}
-        width="100%"
-        height={height}
-        role="img"
-        aria-label={`Spatial interaction network`}
-        className="w-full"
-      />
-
-      {/* Tooltip */}
-      {tooltip && (
-        <div
-          className="absolute z-10 bg-white border border-gray-200 rounded-lg shadow-lg px-3 py-2 text-xs pointer-events-none"
-          style={{ left: tooltip.x + 12, top: tooltip.y - 10 }}
-        >
-          <div className="font-semibold text-gray-900">{tooltip.node.id}</div>
-          <div className="text-gray-500">
-            Spatial score: {(tooltip.node.score * 10).toFixed(1)}/10
-          </div>
-          <div className="text-gray-500">Cluster: {tooltip.node.group}</div>
+      {/* ── Graph canvas ─────────────────────────────────────────── */}
+      <div className={`relative border border-gray-200 rounded-xl overflow-hidden bg-gray-50 ${className}`}>
+        {/* Legend */}
+        <div className="absolute top-3 left-3 z-10 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-sm">
+          {GROUP_COLORS.slice(0, 3).map((color, i) => (
+            <span key={i} className="flex items-center gap-1.5">
+              <span
+                className="inline-block h-3 w-3 rounded-full border border-white shadow-sm"
+                style={{ background: color }}
+              />
+              {GROUP_LABELS[i]}
+            </span>
+          ))}
+          <span className="flex items-center gap-1.5 text-gray-400">
+            <span className="inline-block w-5 rounded" style={{ borderTop: '2px solid #cbd5e1' }} />
+            Hi-C contact
+          </span>
         </div>
-      )}
+
+        {/* Zoom controls */}
+        <div className="absolute top-3 right-3 z-10 flex flex-col gap-1">
+          <button
+            onClick={() => handleZoom(1.4)}
+            className="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200 bg-white/90 shadow-sm hover:bg-gray-50 transition"
+            title="Zoom in"
+          >
+            <ZoomIn className="h-3.5 w-3.5 text-gray-600" />
+          </button>
+          <button
+            onClick={() => handleZoom(1 / 1.4)}
+            className="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200 bg-white/90 shadow-sm hover:bg-gray-50 transition"
+            title="Zoom out"
+          >
+            <ZoomOut className="h-3.5 w-3.5 text-gray-600" />
+          </button>
+          <button
+            onClick={handleReset}
+            className="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200 bg-white/90 shadow-sm hover:bg-gray-50 transition"
+            title="Reset view"
+          >
+            <RotateCcw className="h-3.5 w-3.5 text-gray-600" />
+          </button>
+        </div>
+
+        <svg
+          ref={svgRef}
+          width="100%"
+          height={height}
+          role="img"
+          aria-label="Spatial interaction network"
+          className="w-full"
+        />
+
+        {/* Hover tooltip (only when nothing is selected) */}
+        {tooltip && !selected && (
+          <div
+            className="pointer-events-none absolute z-10 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs shadow-lg"
+            style={{ left: tooltip.x + 12, top: tooltip.y - 10 }}
+          >
+            <div className="font-semibold text-gray-900">{tooltip.node.id}</div>
+            <div className="text-gray-500">
+              Spatial score: {(tooltip.node.score * 10).toFixed(1)} / 10
+            </div>
+            <div className="mt-0.5 text-gray-400">Click for details</div>
+          </div>
+        )}
+
+        {/* Click-selected node panel */}
+        {selected && (
+          <div
+            className="absolute z-20 w-60 rounded-xl border border-gray-200 bg-white shadow-xl text-sm"
+            style={{
+              left: Math.min(selected.x + 16, (svgRef.current?.clientWidth ?? 800) - 256),
+              top: Math.min(selected.y - 10, height - 230),
+            }}
+          >
+            <div className="flex items-center gap-2 border-b border-gray-100 px-3 py-2.5">
+              <span
+                className="inline-block h-3 w-3 rounded-full border-2 border-white shadow-sm shrink-0"
+                style={{
+                  background: GROUP_COLORS[selected.node.group % GROUP_COLORS.length],
+                }}
+              />
+              <span className="font-semibold text-gray-900 flex-1 font-mono">{selected.node.id}</span>
+              <button
+                onClick={() => setSelected(null)}
+                className="text-gray-300 hover:text-gray-600 transition"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+            <div className="px-3 py-3 space-y-2.5">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-gray-500">Spatial Genome Score</span>
+                <span className="font-mono font-bold text-gray-900">
+                  {(selected.node.score * 10).toFixed(1)}&thinsp;/&thinsp;10
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-gray-500">Network role</span>
+                <span className="text-gray-700">
+                  {GROUP_LABELS[selected.node.group % GROUP_LABELS.length] ?? 'Neighbor'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-gray-500">Cluster group</span>
+                <span className="font-mono text-gray-700">{selected.node.group}</span>
+              </div>
+              <div className="pt-2 border-t border-gray-100 text-xs text-gray-400 leading-relaxed">
+                This gene&apos;s chromosomal locus makes frequent Hi-C contacts with the query gene,
+                indicating they share a topological domain or chromatin loop in the nucleus.
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── Footer summary ─────────────────────────────────────── */}
+      <p className="text-xs text-gray-400 text-right">
+        {data.nodes.length} genes &middot; {data.links.length} Hi-C contacts &middot; Scroll to zoom &middot; Drag to pan &middot; Click node for details
+      </p>
     </div>
   );
 }
