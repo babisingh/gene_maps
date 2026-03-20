@@ -91,13 +91,13 @@ export default function HomePage() {
           {/* App introduction */}
           <div className="max-w-2xl mx-auto mb-8 space-y-1.5 text-center">
             <p className="text-white/80 text-base leading-relaxed">
-              Gene-Maps decodes the spatial language of the human genome — where a gene
+              Gene-Maps decodes the spatial language of the human genome, because where a gene
               lives in 3D nuclear space is as critical as what it encodes.
             </p>
             <p className="text-white/60 text-sm leading-relaxed">
               Every query integrates live data across five dimensions: evolutionary conservation,
               chromatin accessibility, protein interaction topology, Hi-C contact frequency,
-              and tissue-resolved expression — converging into a single spatial pharmacogenomics score.
+              and tissue-resolved expression, all converging into a single spatial pharmacogenomics score.
             </p>
             <p className="text-white/50 text-sm leading-relaxed">
               Identify high-confidence drug targets, assess CRISPR edit safety at base-pair
