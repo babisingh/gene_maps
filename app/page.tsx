@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 // ============================================================
 
 import { useState, useEffect } from 'react';
-import dynamic from 'next/dynamic';
+import nextDynamic from 'next/dynamic';
 import { Dna, FlaskConical, Network, Globe, Scissors, Pill } from 'lucide-react';
 import { DnaBanner } from '@/components/DnaBanner';
 import { GeneSearchInterface } from '@/components/GeneSearchInterface';
@@ -20,7 +20,7 @@ import { DrugTargetScore } from '@/components/DrugTargetScore';
 import type { NetworkData } from '@/types';
 
 // Three.js must be loaded client-side only — no SSR
-const TAD3DNetworkVisualization = dynamic(
+const TAD3DNetworkVisualization = nextDynamic(
   () =>
     import('@/components/TAD3DNetworkVisualization').then(
       (m) => ({ default: m.TAD3DNetworkVisualization })
