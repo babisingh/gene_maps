@@ -41,12 +41,13 @@ interface Props {
 
 // ── Constants ─────────────────────────────────────────────────
 
+// Index matches the `group` value from the API (query=1, neighbors=2, secondary=3…)
 const GROUP_COLORS = [
-  '#3b82f6', // query gene
-  '#8b5cf6', // direct spatial neighbor
-  '#10b981', // secondary
-  '#f59e0b', // tertiary
-  '#ef4444', // distant
+  '#22d3ee', // 0 unused in current seed data
+  '#f472b6', // 1 query gene → hot pink (distinctive centre)
+  '#818cf8', // 2 direct neighbor → indigo
+  '#34d399', // 3 secondary → green
+  '#fbbf24', // 4 distant → amber
 ];
 
 const TAD_PALETTE = ['#6366f1', '#06b6d4', '#f472b6', '#34d399', '#fbbf24'];
@@ -115,8 +116,8 @@ function computePositions(
         (l.target === node.id && l.source === query.id)
     );
     const radius = link?.distance_3d
-      ? Math.max(12, Math.min(58, link.distance_3d / 2))
-      : 18 + (1 - node.score) * 30;
+      ? Math.max(28, Math.min(70, link.distance_3d / 1.4))
+      : 28 + (1 - node.score) * 35;
 
     map.set(node.id, sphere[i].clone().multiplyScalar(radius));
   });
@@ -147,7 +148,7 @@ function GeneBead({
     () => new THREE.Color(GROUP_COLORS[node.group % GROUP_COLORS.length]),
     [node.group]
   );
-  const radius = 0.8 + node.score * 2.4;
+  const radius = 2.2 + node.score * 3.2;
   const active = hovered || isSelected;
 
   useFrame((_, dt) => {
@@ -161,14 +162,15 @@ function GeneBead({
 
   return (
     <group position={position}>
-      {/* Bloom halo — wide, very transparent sphere behind the bead */}
+      {/* Additive glow halo — wide sphere that brightens everything behind it */}
       <mesh renderOrder={-1}>
-        <sphereGeometry args={[radius * 2.2, 16, 16]} />
+        <sphereGeometry args={[radius * 3.8, 16, 16]} />
         <meshBasicMaterial
           color={color}
           transparent
-          opacity={active ? 0.10 : 0.035}
+          opacity={active ? 0.20 : 0.08}
           depthWrite={false}
+          blending={THREE.AdditiveBlending}
         />
       </mesh>
 
@@ -223,20 +225,24 @@ function HiCContactArc({
 }) {
   const points = useMemo(() => {
     const dist = source.distanceTo(target);
-    const mid = new THREE.Vector3()
-      .addVectors(source, target)
+    const dir = target.clone().sub(source).normalize();
+    // Pick a perpendicular axis — fall back from Y if arc is nearly vertical
+    const up = Math.abs(dir.y) < 0.85 ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(1, 0, 0);
+    const perp = new THREE.Vector3().crossVectors(dir, up).normalize();
+    const midpoint = source.clone()
+      .add(target)
       .multiplyScalar(0.5)
-      .add(new THREE.Vector3(0, dist * 0.32, 0));
-    return new THREE.QuadraticBezierCurve3(source, mid, target).getPoints(48);
+      .add(perp.multiplyScalar(dist * 0.42));
+    return new THREE.QuadraticBezierCurve3(source, midpoint, target).getPoints(64);
   }, [source, target]);
 
   return (
     <Line
       points={points}
-      color="#94a3b8"
-      lineWidth={Math.max(0.5, Math.sqrt(value) * 0.55)}
+      color="#a5b4fc"
+      lineWidth={Math.max(0.9, Math.sqrt(value) * 0.75)}
       transparent
-      opacity={0.12 + confidence * 0.42}
+      opacity={0.28 + confidence * 0.52}
     />
   );
 }
@@ -355,24 +361,38 @@ function Scene({
       <pointLight position={[-65, -40, 75]} intensity={0.35} color={0x67e8f9} />
 
       {/* ── Nucleus shell ────────────────────────────────────── */}
-      {/* Dark outer membrane — rendered inside-out so it wraps the scene */}
+      {/* Outer atmospheric glow — additive so it brightens the edges */}
+      <mesh>
+        <sphereGeometry args={[97, 32, 32]} />
+        <meshBasicMaterial
+          color={0x304090}
+          transparent
+          opacity={0.055}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+        />
+      </mesh>
+      {/* Nucleus membrane — DoubleSide so it shows from both inside and outside */}
       <mesh onClick={handleCanvasClick}>
         <sphereGeometry args={[88, 64, 64]} />
         <meshStandardMaterial
-          color={0x060e20}
+          color={0x1a2560}
+          emissive={0x0a1440}
+          emissiveIntensity={0.55}
           transparent
-          opacity={0.60}
-          roughness={0.04}
-          side={THREE.BackSide}
+          opacity={0.22}
+          roughness={0.2}
+          side={THREE.DoubleSide}
+          depthWrite={false}
         />
       </mesh>
-      {/* Subtle inner chromatin haze */}
+      {/* Inner chromatin haze */}
       <mesh>
-        <sphereGeometry args={[85, 32, 32]} />
+        <sphereGeometry args={[82, 32, 32]} />
         <meshBasicMaterial
           color={0x1e3a5f}
           transparent
-          opacity={0.08}
+          opacity={0.13}
           depthWrite={false}
         />
       </mesh>
@@ -436,12 +456,14 @@ function Scene({
         })}
 
       <OrbitControls
+        autoRotate
+        autoRotateSpeed={0.55}
         enableDamping
         dampingFactor={0.06}
-        rotateSpeed={0.48}
+        rotateSpeed={0.55}
         zoomSpeed={0.85}
-        minDistance={18}
-        maxDistance={180}
+        minDistance={22}
+        maxDistance={210}
         makeDefault
       />
     </>
@@ -483,10 +505,14 @@ export function TAD3DNetworkVisualization({ data, tads = [], className = '' }: P
         className="absolute bottom-3 right-3 flex flex-col gap-1.5 rounded-lg px-3 py-2 text-xs text-white/55"
         style={{ background: 'rgba(15,7,38,0.82)', backdropFilter: 'blur(8px)' }}
       >
-        {GROUP_COLORS.slice(0, 3).map((c, i) => (
-          <span key={i} className="flex items-center gap-2">
-            <span className="h-2.5 w-2.5 rounded-full border border-white/20" style={{ background: c }} />
-            {['Query gene', 'Direct neighbor', 'Secondary'][i]}
+        {[
+          { color: GROUP_COLORS[1], label: 'Query gene' },
+          { color: GROUP_COLORS[2], label: 'Direct neighbor' },
+          { color: GROUP_COLORS[3], label: 'Secondary' },
+        ].map(({ color, label }) => (
+          <span key={label} className="flex items-center gap-2">
+            <span className="h-2.5 w-2.5 rounded-full border border-white/20" style={{ background: color }} />
+            {label}
           </span>
         ))}
         <span className="flex items-center gap-2 text-purple-300/60">
