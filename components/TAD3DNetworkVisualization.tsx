@@ -25,8 +25,7 @@
 import { useRef, useState, useMemo, Suspense } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Text, Line } from '@react-three/drei';
-import { EffectComposer, Bloom, ToneMapping } from '@react-three/postprocessing';
-import { BlendFunction, ToneMappingMode } from 'postprocessing';
+import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import * as THREE from 'three';
 import { X } from 'lucide-react';
 import type { NetworkData, NetworkNode, NetworkLink, TADDomain, NetworkNode3D } from '@/types';
@@ -472,18 +471,17 @@ function Scene({
         makeDefault
       />
 
-      {/* ── Post-processing ──────────────────────────────────── */}
-      {/* Bloom runs in the HDR buffer; ToneMapping converts to display after. */}
-      {/* Renderer tone mapping is disabled (NoToneMapping) so nothing clips early. */}
+      {/* ── Post-processing bloom ────────────────────────────── */}
+      {/* EffectComposer captures the HDR frame before the renderer outputs it. */}
+      {/* Renderer tone mapping is NoToneMapping; EffectComposer's own output  */}
+      {/* pass handles the linear→sRGB conversion after bloom is applied.      */}
       <EffectComposer>
         <Bloom
           mipmapBlur
           intensity={3.2}
           luminanceThreshold={0.08}
           luminanceSmoothing={0.06}
-          blendFunction={BlendFunction.ADD}
         />
-        <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
       </EffectComposer>
     </>
   );
