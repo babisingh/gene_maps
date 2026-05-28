@@ -25,7 +25,8 @@
 import { useRef, useState, useMemo, Suspense } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Text, Line } from '@react-three/drei';
-import { EffectComposer, Bloom } from '@react-three/postprocessing';
+import { EffectComposer, Bloom, ToneMapping } from '@react-three/postprocessing';
+import { BlendFunction, ToneMappingMode } from 'postprocessing';
 import * as THREE from 'three';
 import { X } from 'lucide-react';
 import type { NetworkData, NetworkNode, NetworkLink, TADDomain, NetworkNode3D } from '@/types';
@@ -471,15 +472,18 @@ function Scene({
         makeDefault
       />
 
-      {/* ── Post-processing bloom ────────────────────────────── */}
-      {/* Adds fluorescence-microscopy-style glow to bright/emissive objects */}
+      {/* ── Post-processing ──────────────────────────────────── */}
+      {/* Bloom runs in the HDR buffer; ToneMapping converts to display after. */}
+      {/* Renderer tone mapping is disabled (NoToneMapping) so nothing clips early. */}
       <EffectComposer>
         <Bloom
           mipmapBlur
-          intensity={2.8}
-          luminanceThreshold={0.18}
-          luminanceSmoothing={0.04}
+          intensity={3.2}
+          luminanceThreshold={0.08}
+          luminanceSmoothing={0.06}
+          blendFunction={BlendFunction.ADD}
         />
+        <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
       </EffectComposer>
     </>
   );
@@ -497,7 +501,7 @@ export function TAD3DNetworkVisualization({ data, tads = [], className = '' }: P
       {/* ── Three.js canvas ──────────────────────────────────── */}
       <Canvas
         camera={{ position: [0, 0, 140], fov: 50, near: 0.5, far: 800 }}
-        gl={{ antialias: true, alpha: false, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.0 }}
+        gl={{ antialias: true, alpha: false, toneMapping: THREE.NoToneMapping }}
         dpr={[1, 2]}
         style={{ height: 560 }}
         shadows
