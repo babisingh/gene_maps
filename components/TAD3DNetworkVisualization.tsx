@@ -204,12 +204,12 @@ function computePositions(
         (l.target === node.id && l.source === query.id)
     );
     const baseRadius = link?.distance_3d !== undefined
-      ? 22 + link.distance_3d * 46          // 0→22, 1→68
-      : 28 + (1 - node.score) * 35;
+      ? 30 + link.distance_3d * 38          // 0→30, 1→68
+      : 32 + (1 - node.score) * 30;
 
-    // A compartment → nuclear interior (scale down); B → near lamina (scale up)
+    // A compartment → nuclear interior (subtle pull); B → near lamina (subtle push)
     const compartment = GENE_COMPARTMENTS[node.id];
-    const radialBias = compartment === 'A' ? 0.72 : compartment === 'B' ? 1.18 : 1.0;
+    const radialBias = compartment === 'A' ? 0.86 : compartment === 'B' ? 1.10 : 1.0;
 
     map.set(node.id, sphere[i].clone().multiplyScalar(baseRadius * radialBias));
   });
@@ -563,51 +563,36 @@ function Scene({
       <pointLight position={[65, 65, -65]} intensity={0.55} color={0xc084fc} />
       <pointLight position={[-65, -40, 75]} intensity={0.35} color={0x67e8f9} />
 
-      {/* ── Nucleus shell ────────────────────────────────────── */}
-      {/* Outer atmospheric glow — additive so it brightens the edges */}
-      <mesh>
-        <sphereGeometry args={[97, 32, 32]} />
-        <meshBasicMaterial
-          color={0x304090}
-          transparent
-          opacity={0.055}
-          depthWrite={false}
-          blending={THREE.AdditiveBlending}
-        />
-      </mesh>
-      {/* Nucleus membrane — DoubleSide so it shows from both inside and outside */}
+      {/* ── Nucleus shell — intentionally minimal so gene labels stay readable ── */}
+      {/* Thin dark-edge membrane: just enough to show the nuclear boundary */}
       <mesh onClick={handleCanvasClick}>
         <sphereGeometry args={[88, 64, 64]} />
         <meshStandardMaterial
-          color={0x1a2560}
-          emissive={0x2040c0}
-          emissiveIntensity={0.9}
+          color={0x0d1530}
+          emissive={0x1a2a60}
+          emissiveIntensity={0.35}
           transparent
-          opacity={0.22}
-          roughness={0.2}
+          opacity={0.08}
+          roughness={0.5}
           side={THREE.DoubleSide}
           depthWrite={false}
         />
       </mesh>
-      {/* Inner chromatin haze */}
+      {/* Wireframe-style edge highlight — makes the sphere boundary legible */}
       <mesh>
-        <sphereGeometry args={[82, 32, 32]} />
+        <sphereGeometry args={[88, 24, 24]} />
         <meshBasicMaterial
-          color={0x1e3a5f}
+          color={0x2a4080}
           transparent
-          opacity={0.13}
+          opacity={0.12}
           depthWrite={false}
+          wireframe
         />
       </mesh>
-      {/* A-compartment zone — warm amber glow in nuclear interior */}
+      {/* A-compartment zone — very faint warm hint at nuclear interior */}
       <mesh>
-        <sphereGeometry args={[48, 32, 32]} />
-        <meshBasicMaterial color={0x3d2a0a} transparent opacity={0.10} depthWrite={false} />
-      </mesh>
-      {/* B-compartment zone — cool peripheral ring just inside membrane */}
-      <mesh>
-        <sphereGeometry args={[76, 32, 32]} />
-        <meshBasicMaterial color={0x0d1f3a} transparent opacity={0.09} depthWrite={false} side={THREE.BackSide} />
+        <sphereGeometry args={[50, 24, 24]} />
+        <meshBasicMaterial color={0x2d1e08} transparent opacity={0.06} depthWrite={false} />
       </mesh>
 
       {/* ── TAD domain hulls ─────────────────────────────────── */}
