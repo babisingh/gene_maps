@@ -563,36 +563,10 @@ function Scene({
       <pointLight position={[65, 65, -65]} intensity={0.55} color={0xc084fc} />
       <pointLight position={[-65, -40, 75]} intensity={0.35} color={0x67e8f9} />
 
-      {/* ── Nucleus shell — intentionally minimal so gene labels stay readable ── */}
-      {/* Thin dark-edge membrane: just enough to show the nuclear boundary */}
+      {/* Invisible click target for deselecting nodes */}
       <mesh onClick={handleCanvasClick}>
-        <sphereGeometry args={[88, 64, 64]} />
-        <meshStandardMaterial
-          color={0x0d1530}
-          emissive={0x1a2a60}
-          emissiveIntensity={0.35}
-          transparent
-          opacity={0.08}
-          roughness={0.5}
-          side={THREE.DoubleSide}
-          depthWrite={false}
-        />
-      </mesh>
-      {/* Wireframe-style edge highlight — makes the sphere boundary legible */}
-      <mesh>
-        <sphereGeometry args={[88, 24, 24]} />
-        <meshBasicMaterial
-          color={0x2a4080}
-          transparent
-          opacity={0.12}
-          depthWrite={false}
-          wireframe
-        />
-      </mesh>
-      {/* A-compartment zone — very faint warm hint at nuclear interior */}
-      <mesh>
-        <sphereGeometry args={[50, 24, 24]} />
-        <meshBasicMaterial color={0x2d1e08} transparent opacity={0.06} depthWrite={false} />
+        <sphereGeometry args={[88, 16, 16]} />
+        <meshBasicMaterial transparent opacity={0} depthWrite={false} />
       </mesh>
 
       {/* ── TAD domain hulls ─────────────────────────────────── */}
@@ -718,7 +692,7 @@ export function TAD3DNetworkVisualization({ data, tads = [], className = '' }: P
       </Canvas>
 
       {/* ── HUD labels ───────────────────────────────────────── */}
-      <p className="pointer-events-none absolute top-3 left-3 select-none font-mono text-xs text-white/30">
+      <p className="pointer-events-none absolute top-3 left-3 select-none font-mono text-xs text-white/60">
         3D Spatial Network · Drag to orbit · Scroll to zoom · Click gene to inspect
       </p>
 
