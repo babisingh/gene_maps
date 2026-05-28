@@ -718,7 +718,7 @@ export function TAD3DNetworkVisualization({ data, tads = [], className = '' }: P
       </Canvas>
 
       {/* ── HUD labels ───────────────────────────────────────── */}
-      <p className="pointer-events-none absolute top-3 left-3 select-none font-mono text-xs text-white/30">
+      <p className="pointer-events-none absolute top-3 left-3 select-none font-mono text-xs text-white/60">
         3D Spatial Network · Drag to orbit · Scroll to zoom · Click gene to inspect
       </p>
 
