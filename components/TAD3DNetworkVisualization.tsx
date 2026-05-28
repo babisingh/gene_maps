@@ -595,17 +595,8 @@ function Scene({
         <meshBasicMaterial color={0x2d1e08} transparent opacity={0.06} depthWrite={false} />
       </mesh>
 
-      {/* ── TAD domain hulls ─────────────────────────────────── */}
-      {/* When real TAD data is provided, use it; otherwise synthesise from network groups */}
-      {(tads.length > 0 ? tads : (() => {
-        // Synthetic: query + direct neighbours = core TAD, secondary = extended TAD
-        const corePts = data.nodes.filter((n) => n.group <= 2).map((n) => positions.get(n.id)).filter((p): p is THREE.Vector3 => !!p);
-        const extPts  = data.nodes.filter((n) => n.group >= 3).map((n) => positions.get(n.id)).filter((p): p is THREE.Vector3 => !!p);
-        const synth: TADDomain[] = [];
-        if (corePts.length >= 2) synth.push({ tad_id: 'core', chromosome: '', tad_start: 0, tad_end: 0, size_bp: 0, boundary_strength: 0.75, gene_ids: data.nodes.filter((n) => n.group <= 2).map((n) => n.id), compartment: 'A' });
-        if (extPts.length  >= 2) synth.push({ tad_id: 'ext',  chromosome: '', tad_start: 0, tad_end: 0, size_bp: 0, boundary_strength: 0.45, gene_ids: data.nodes.filter((n) => n.group >= 3).map((n) => n.id), compartment: 'A' });
-        return synth;
-      })()).map((tad, i) => {
+      {/* TAD domain hulls shown only when real TAD data is provided */}
+      {tads.length > 0 && tads.map((tad, i) => {
         const pts = tad.gene_ids
           .map((id) => positions.get(id))
           .filter((p): p is THREE.Vector3 => !!p);
