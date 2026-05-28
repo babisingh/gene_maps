@@ -37,12 +37,14 @@ export default function HomePage() {
   const [networkData, setNetworkData] = useState<NetworkData | null>(null);
   const [networkLoading, setNetworkLoading] = useState(false);
   const [networkError, setNetworkError] = useState<string | null>(null);
+  const [networkSource, setNetworkSource] = useState<'live' | 'seed' | null>(null);
 
   const handleGeneSelect = (gene: string) => {
     setSelectedGene(gene);
     setActiveTab('network');
     setNetworkData(null);
     setNetworkError(null);
+    setNetworkSource(null);
   };
 
   useEffect(() => {
@@ -55,7 +57,10 @@ export default function HomePage() {
         const res = await fetch(`/api/spatial/network/${encodeURIComponent(selectedGene)}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data: NetworkData = await res.json();
-        if (!cancelled) setNetworkData(data);
+        if (!cancelled) {
+          setNetworkData(data);
+          setNetworkSource(res.headers.get('x-data-source') === 'seed' ? 'seed' : 'live');
+        }
       } catch (err) {
         if (!cancelled) setNetworkError((err as Error).message);
       } finally {
@@ -188,7 +193,24 @@ export default function HomePage() {
                           </div>
                         )}
                         {networkData && !networkLoading && (
-                          <SpatialNetworkVisualization data={networkData} height={500} />
+                          <div className="space-y-2">
+                            {networkSource === 'seed' && (
+                              <div className="flex items-center gap-2 rounded-lg border border-amber-500/25 bg-amber-950/30 px-3 py-2 text-xs text-amber-300">
+                                <span className="h-1.5 w-1.5 rounded-full bg-amber-400 shrink-0" />
+                                <span>
+                                  <strong>Demo data</strong> — showing pre-computed seed interactions.
+                                  Connect a Neo4j database to load live Hi-C contact data.
+                                </span>
+                              </div>
+                            )}
+                            {networkSource === 'live' && (
+                              <div className="flex items-center gap-2 rounded-lg border border-emerald-500/20 bg-emerald-950/20 px-3 py-2 text-xs text-emerald-400">
+                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shrink-0" />
+                                Live Neo4j data
+                              </div>
+                            )}
+                            <SpatialNetworkVisualization data={networkData} height={500} />
+                          </div>
                         )}
                       </div>
                     )}
