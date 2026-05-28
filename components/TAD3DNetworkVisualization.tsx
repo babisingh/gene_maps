@@ -25,6 +25,7 @@
 import { useRef, useState, useMemo, Suspense } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Text, Line } from '@react-three/drei';
+import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import * as THREE from 'three';
 import { X } from 'lucide-react';
 import type { NetworkData, NetworkNode, NetworkLink, TADDomain, NetworkNode3D } from '@/types';
@@ -186,9 +187,9 @@ function GeneBead({
         <meshStandardMaterial
           color={color}
           emissive={color}
-          emissiveIntensity={active ? 0.95 : 0.35}
-          roughness={0.22}
-          metalness={0.12}
+          emissiveIntensity={active ? 3.5 : 1.6}
+          roughness={0.18}
+          metalness={0.05}
         />
       </mesh>
 
@@ -239,10 +240,10 @@ function HiCContactArc({
   return (
     <Line
       points={points}
-      color="#a5b4fc"
-      lineWidth={Math.max(0.9, Math.sqrt(value) * 0.75)}
+      color="#c4b5fd"
+      lineWidth={Math.max(1.2, Math.sqrt(value) * 0.9)}
       transparent
-      opacity={0.28 + confidence * 0.52}
+      opacity={0.55 + confidence * 0.4}
     />
   );
 }
@@ -351,6 +352,9 @@ function Scene({
 
   return (
     <>
+      {/* Dark scene background — required when Canvas alpha is off */}
+      <color attach="background" args={['#050a14']} />
+
       {/* ── Lighting ─────────────────────────────────────────── */}
       {/* Cool blue ambient mimics diffuse nuclear scatter */}
       <ambientLight intensity={0.45} color={0x8ab4ff} />
@@ -377,8 +381,8 @@ function Scene({
         <sphereGeometry args={[88, 64, 64]} />
         <meshStandardMaterial
           color={0x1a2560}
-          emissive={0x0a1440}
-          emissiveIntensity={0.55}
+          emissive={0x2040c0}
+          emissiveIntensity={0.9}
           transparent
           opacity={0.22}
           roughness={0.2}
@@ -466,6 +470,17 @@ function Scene({
         maxDistance={210}
         makeDefault
       />
+
+      {/* ── Post-processing bloom ────────────────────────────── */}
+      {/* Adds fluorescence-microscopy-style glow to bright/emissive objects */}
+      <EffectComposer>
+        <Bloom
+          mipmapBlur
+          intensity={2.8}
+          luminanceThreshold={0.18}
+          luminanceSmoothing={0.04}
+        />
+      </EffectComposer>
     </>
   );
 }
@@ -482,12 +497,9 @@ export function TAD3DNetworkVisualization({ data, tads = [], className = '' }: P
       {/* ── Three.js canvas ──────────────────────────────────── */}
       <Canvas
         camera={{ position: [0, 0, 140], fov: 50, near: 0.5, far: 800 }}
-        gl={{ antialias: true, alpha: true }}
+        gl={{ antialias: true, alpha: false, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.0 }}
         dpr={[1, 2]}
-        style={{
-          height: 560,
-          background: 'radial-gradient(ellipse at center, #0a1628 0%, #050a14 100%)',
-        }}
+        style={{ height: 560 }}
         shadows
       >
         <Suspense fallback={null}>
