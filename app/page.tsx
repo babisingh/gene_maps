@@ -8,23 +8,40 @@ export const dynamic = 'force-dynamic';
 // ============================================================
 
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { Dna, FlaskConical, Network, Globe, Scissors, Pill } from 'lucide-react';
 import { DnaBanner } from '@/components/DnaBanner';
 import { GeneSearchInterface } from '@/components/GeneSearchInterface';
 import { GeneInfoPanel } from '@/components/GeneInfoPanel';
-import { SpatialNetworkVisualization } from '@/components/SpatialNetworkVisualization';
 import { SpatialScore } from '@/components/SpatialScore';
 import { ConservationAnalysis } from '@/components/ConservationAnalysis';
 import { CRISPRSafetyAssessment } from '@/components/CRISPRSafetyAssessment';
 import { DrugTargetScore } from '@/components/DrugTargetScore';
 import type { NetworkData } from '@/types';
 
+// Three.js must be loaded client-side only — no SSR
+const TAD3DNetworkVisualization = dynamic(
+  () =>
+    import('@/components/TAD3DNetworkVisualization').then(
+      (m) => ({ default: m.TAD3DNetworkVisualization })
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-[560px] items-center justify-center gap-2 text-sm text-white/40">
+        <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-gm-pink border-t-transparent" />
+        Loading 3D scene…
+      </div>
+    ),
+  }
+);
+
 type Tab = 'network' | 'score' | 'conservation' | 'crispr' | 'drug';
 
 const FEATURED_GENES = ['GCG', 'BRCA1', 'TP53', 'EGFR', 'KRAS', 'INS', 'APOE', 'SNCA'];
 
 const FEATURE_CARDS = [
-  { icon: '🧬', title: 'Spatial Networks',  desc: 'Interactive D3.js force-directed graph of Hi-C 3D genome contacts' },
+  { icon: '🧬', title: 'Spatial Networks',  desc: 'Interactive 3D nucleus scene — gene beads, Hi-C contact arcs and TAD domain hulls' },
   { icon: '📊', title: 'Spatial Score',     desc: '5-component weighted score: conservation, accessibility, PPI centrality, Hi-C contacts, GTEx expression' },
   { icon: '🌍', title: 'Conservation',      desc: 'Real ENSEMBL ortholog data across 10 model organisms with percent identity' },
   { icon: '✂️', title: 'CRISPR Safety',     desc: 'Deterministic TAD disruption risk (CTCF density) + PhyloP conservation constraint' },
@@ -209,7 +226,7 @@ export default function HomePage() {
                                 Live Neo4j data
                               </div>
                             )}
-                            <SpatialNetworkVisualization data={networkData} height={500} />
+                            <TAD3DNetworkVisualization data={networkData} />
                           </div>
                         )}
                       </div>
