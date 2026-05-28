@@ -15,8 +15,8 @@
     "db:seed": "ts-node --project tsconfig.scripts.json scripts/populate-database.ts"
   },
   "dependencies": {
-    "@react-three/drei": "^9.121.0",
-    "@react-three/fiber": "^8.17.14",
+    "@react-three/drei": "^9.122.0",
+    "@react-three/fiber": "^8.18.0",
     "axios": "^1.13.6",
     "d3": "^7.9.0",
     "date-fns": "^4.1.0",
