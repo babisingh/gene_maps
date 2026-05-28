@@ -53,6 +53,61 @@ const GROUP_COLORS = [
 
 const TAD_PALETTE = ['#6366f1', '#06b6d4', '#f472b6', '#34d399', '#fbbf24'];
 
+// Approximate GRCh38 genomic start positions for seed genes.
+// Used to sort nodes in linear genomic order for the backbone thread.
+// Key insight: two genes far apart here can be spatially proximal (TAD looping).
+const GENE_POSITIONS: Record<string, { chr: string; start: number }> = {
+  GCG:     { chr: '2',  start: 162_148_788 },
+  POMC:    { chr: '2',  start: 25_160_858  },
+  ALK:     { chr: '2',  start: 29_192_774  },
+  IDH1:    { chr: '2',  start: 208_236_227 },
+  CTLA4:   { chr: '2',  start: 203_867_773 },
+  INS:     { chr: '11', start: 2_159_779   },
+  CCND1:   { chr: '11', start: 69_641_156  },
+  INSR:    { chr: '19', start: 7_112_321   },
+  LDLR:    { chr: '19', start: 11_089_463  },
+  APOE:    { chr: '19', start: 44_905_796  },
+  LEP:     { chr: '7',  start: 127_881_598 },
+  EGFR:    { chr: '7',  start: 55_019_032  },
+  BRAF:    { chr: '7',  start: 140_719_327 },
+  IL6:     { chr: '7',  start: 22_725_886  },
+  CFTR:    { chr: '7',  start: 117_480_025 },
+  PPARG:   { chr: '3',  start: 12_287_366  },
+  PIK3CA:  { chr: '3',  start: 179_148_114 },
+  VHL:     { chr: '3',  start: 10_141_778  },
+  SORT1:   { chr: '1',  start: 109_817_999 },
+  PSEN2:   { chr: '1',  start: 226_880_879 },
+  TP53:    { chr: '17', start: 7_668_421   },
+  BRCA1:   { chr: '17', start: 43_044_295  },
+  ERBB2:   { chr: '17', start: 39_687_914  },
+  NF1:     { chr: '17', start: 31_094_013  },
+  MAPT:    { chr: '17', start: 45_894_527  },
+  MDM2:    { chr: '12', start: 68_808_172  },
+  KRAS:    { chr: '12', start: 25_205_246  },
+  LRRK2:   { chr: '12', start: 40_224_986  },
+  CACNA1C: { chr: '12', start: 1_970_786   },
+  RB1:     { chr: '13', start: 48_303_747  },
+  BRCA2:   { chr: '13', start: 32_315_508  },
+  MYC:     { chr: '8',  start: 127_735_434 },
+  CDKN2A:  { chr: '9',  start: 21_967_752  },
+  CD274:   { chr: '9',  start: 5_450_503   },
+  JAK2:    { chr: '9',  start: 4_985_245   },
+  C9orf72: { chr: '9',  start: 27_546_542  },
+  FTO:     { chr: '16', start: 53_703_010  },
+  FUS:     { chr: '16', start: 31_185_157  },
+  PSEN1:   { chr: '14', start: 73_136_418  },
+  PTEN:    { chr: '10', start: 89_692_905  },
+  APP:     { chr: '21', start: 25_880_550  },
+  SOD1:    { chr: '21', start: 31_659_666  },
+  SNCA:    { chr: '4',  start: 89_724_099  },
+  HTT:     { chr: '4',  start: 3_074_877   },
+  TNF:     { chr: '6',  start: 31_575_565  },
+  VEGFA:   { chr: '6',  start: 43_770_209  },
+  APC:     { chr: '5',  start: 112_707_498 },
+  HNF4A:   { chr: '20', start: 44_355_801  },
+  COMT:    { chr: '22', start: 19_929_268  },
+};
+
 // ── Geometry helpers ──────────────────────────────────────────
 
 /**
@@ -313,6 +368,85 @@ function CTCFRing({
   );
 }
 
+/**
+ * Chromosome backbone thread.
+ *
+ * Groups visible nodes by chromosome, sorts them by linear genomic position,
+ * then draws a CatmullRom spline through their 3D positions in that order.
+ *
+ * This makes the core TAD insight visible: genes that are far apart on the
+ * linear chromosome (large Δstart_pos) can be spatially proximal because
+ * chromatin loops fold them together. The backbone shows the linear order;
+ * the Hi-C arcs show the 3D proximity that "explains" the loop.
+ */
+function ChromatinBackbone({
+  nodes,
+  positions,
+}: {
+  nodes: NetworkNode[];
+  positions: Map<string, THREE.Vector3>;
+}) {
+  const backbones = useMemo(() => {
+    const byChrom = new Map<
+      string,
+      Array<{ id: string; start: number; pos: THREE.Vector3 }>
+    >();
+
+    for (const node of nodes) {
+      const gp = GENE_POSITIONS[node.id];
+      const pos = positions.get(node.id);
+      if (!gp || !pos) continue;
+      if (!byChrom.has(gp.chr)) byChrom.set(gp.chr, []);
+      byChrom.get(gp.chr)!.push({ id: node.id, start: gp.start, pos });
+    }
+
+    const result: Array<{
+      chr: string;
+      spline: THREE.Vector3[];
+      genePts: THREE.Vector3[];
+      color: string;
+    }> = [];
+
+    for (const [chr, entries] of Array.from(byChrom.entries())) {
+      if (entries.length < 2) continue;
+      entries.sort((a: { start: number }, b: { start: number }) => a.start - b.start);
+
+      const pts = entries.map((e: { pos: THREE.Vector3 }) => e.pos);
+      const curve = new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0.5);
+      const spline = curve.getPoints(Math.max(60, pts.length * 25));
+
+      // Golden-angle hue spread so each chromosome gets a distinct tint
+      const chrIdx = parseInt(chr) || 23;
+      const hue = Math.round((chrIdx * 137.508) % 360);
+      result.push({ chr, spline, genePts: pts, color: `hsl(${hue}, 55%, 70%)` });
+    }
+
+    return result;
+  }, [nodes, positions]);
+
+  if (!backbones.length) return null;
+
+  return (
+    <>
+      {backbones.map(({ chr, spline, genePts, color }) => (
+        <group key={chr}>
+          {/* Wide soft glow trace */}
+          <Line points={spline} color={color} lineWidth={4} transparent opacity={0.07} />
+          {/* Core backbone thread */}
+          <Line points={spline} color={color} lineWidth={1.1} transparent opacity={0.42} />
+          {/* Small marker sphere at each gene locus on the backbone */}
+          {genePts.map((pos, i) => (
+            <mesh key={i} position={pos.toArray()}>
+              <sphereGeometry args={[1.0, 8, 8]} />
+              <meshBasicMaterial color={color} transparent opacity={0.65} depthWrite={false} />
+            </mesh>
+          ))}
+        </group>
+      ))}
+    </>
+  );
+}
+
 // ── Scene ─────────────────────────────────────────────────────
 
 function Scene({
@@ -409,6 +543,11 @@ function Scene({
         const color = tadColorMap.get(tad.tad_id) ?? new THREE.Color(TAD_PALETTE[0]);
         return <TADHull key={tad.tad_id} positions={pts} tad={tad} color={color} />;
       })}
+
+      {/* ── Chromosome backbone threads ──────────────────────── */}
+      {/* Shows linear genomic order — distant nodes on same chr are connected */}
+      {/* Hi-C arcs then reveal which distant loci loop together in 3D space  */}
+      <ChromatinBackbone nodes={data.nodes} positions={positions} />
 
       {/* ── Hi-C contact arcs ────────────────────────────────── */}
       {data.links.map((link, i) => {
@@ -532,6 +671,10 @@ export function TAD3DNetworkVisualization({ data, tads = [], className = '' }: P
         <span className="flex items-center gap-2 text-purple-300/60">
           <span className="h-2.5 w-2.5 rounded-full border border-purple-300/30" style={{ background: '#f0abfc' }} />
           CTCF boundary
+        </span>
+        <span className="flex items-center gap-2 text-slate-300/50 mt-0.5 pt-1 border-t border-white/10">
+          <span className="h-0.5 w-5 rounded-full" style={{ background: 'hsl(45,55%,70%)' }} />
+          Chr. backbone (linear order)
         </span>
       </div>
 
