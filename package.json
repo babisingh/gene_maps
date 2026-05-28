@@ -15,6 +15,8 @@
     "db:seed": "ts-node --project tsconfig.scripts.json scripts/populate-database.ts"
   },
   "dependencies": {
+    "@react-three/drei": "^9.122.0",
+    "@react-three/fiber": "^8.18.0",
     "axios": "^1.13.6",
     "d3": "^7.9.0",
     "date-fns": "^4.1.0",
@@ -26,6 +28,7 @@
     "react-dom": "^18",
     "recharts": "^3.8.0",
     "redis": "^5.11.0",
+    "three": "^0.169.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
@@ -37,6 +40,7 @@
     "@types/pg": "^8.18.0",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@types/three": "^0.169.0",
     "dotenv": "^17.3.1",
     "eslint": "^8",
     "eslint-config-next": "14.2.35",

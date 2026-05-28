@@ -182,6 +182,44 @@ export interface ValidationResult {
   error?: string;
 }
 
+// ── TAD 3D Visualization ──────────────────────────────────────
+
+// NetworkNode extended with optional 3D coordinates and domain membership.
+// x3d/y3d/z3d are derived from Hi-C MDS or force-simulation in 3D space.
+// Falls back to Fibonacci sphere placement when coordinates are absent.
+export interface NetworkNode3D extends NetworkNode {
+  x3d?: number;
+  y3d?: number;
+  z3d?: number;
+  tad_id?: string;          // which TADDomain this gene belongs to
+  compartment?: 'A' | 'B'; // A = active/gene-rich (nuclear interior), B = inactive/periphery
+  strand?: number;          // 1 or -1 (gene orientation on chromosome)
+}
+
+// A single Topologically Associating Domain.
+// Represents a self-interacting chromatin region (~200kb–2Mb) insulated at
+// its boundaries by CTCF proteins.
+export interface TADDomain {
+  tad_id: string;
+  chromosome: string;
+  tad_start: number;         // genomic coordinate (bp)
+  tad_end: number;           // genomic coordinate (bp)
+  size_bp: number;           // tad_end - tad_start
+  boundary_strength: number; // 0–1, derived from CTCF site density
+  gene_ids: string[];        // gene symbols that fall within this domain
+  compartment: 'A' | 'B';
+  color?: string;            // optional hex override for visualization
+}
+
+// Top-level payload for the 3D TAD network scene.
+// Drop-in alongside the existing NetworkData for the 2D view.
+export interface NetworkData3D {
+  nodes: NetworkNode3D[];
+  links: NetworkLink[];
+  tads: TADDomain[];
+  nucleus_radius?: number; // scene scale in arbitrary units (default 88)
+}
+
 // ── Caching ───────────────────────────────────────────────────
 
 export interface CacheEntry<T> {
